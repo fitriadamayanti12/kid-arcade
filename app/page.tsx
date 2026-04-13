@@ -1,7 +1,7 @@
 // app/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import RewardDisplay from '@/app/components/RewardDisplay';
 import ProgressDashboard from '@/app/components/ProgressDashboard';
@@ -9,9 +9,11 @@ import Leaderboard from '@/app/components/Leaderboard';
 import MemoryMatch from '@/app/components/MemoryMatch';
 import TimerChallenge from '@/app/components/TimerChallenge';
 import BubbleMath from '@/app/components/BubbleMath';
+import WordMatch from '@/app/components/WordMatch';
+import FillBlanks from '@/app/components/FillBlanks';
 import { useSoundEffect } from '@/hooks/useSoundEffect';
 
-type GameType = 'puzzle' | 'memory' | 'timer' | 'bubble';
+type GameType = 'puzzle' | 'memory' | 'timer' | 'bubble' | 'wordmatch' | 'fillblanks';
 
 interface PuzzlePiece {
   id: string;
@@ -45,45 +47,52 @@ const slots: Slot[] = [
 ];
 
 export default function Home() {
+  // ========== USER STATE ==========
   const [playerName, setPlayerName] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [selectedGame, setSelectedGame] = useState<GameType>('puzzle');
-  const [selectedAvatar, setSelectedAvatar] = useState('👧');
+  const [selectedAvatar, setSelectedAvatar] = useState('👦');
   const [showSidebar, setShowSidebar] = useState<'progress' | 'leaderboard'>('progress');
-  
-  // Sound effects
+
+  // ========== SOUND EFFECTS ==========
   const { playSound, toggleSound, isSoundEnabled } = useSoundEffect();
   const [soundEnabled, setSoundEnabled] = useState(true);
-  
-  // Puzzle game states
+
+  // ========== PUZZLE GAME STATES ==========
   const [matched, setMatched] = useState<Record<string, string>>({});
   const [startTime, setStartTime] = useState<number | null>(null);
   const [feedback, setFeedback] = useState('');
-  
-  // Common states
+
+  // ========== COMMON STATES ==========
   const [showReward, setShowReward] = useState(false);
   const [lastReward, setLastReward] = useState<any>(null);
   const [gameKey, setGameKey] = useState(0);
 
+  // ========== REFS UNTUK MENCEGAH DOUBLE EXECUTION ==========
+  const puzzleCompletedRef = useRef(false);
+  const isCompletingRef = useRef(false);
+
+  // ========== HANDLER: TOGGLE SOUND ==========
   const handleToggleSound = () => {
     const enabled = toggleSound();
     setSoundEnabled(enabled);
     playSound('click');
   };
 
+  // ========== HANDLER: LOGIN ==========
   const handleLogin = async (name: string) => {
     if (!name.trim()) return;
-    
+
     setPlayerName(name);
     setIsLoggedIn(true);
     playSound('win');
-    
+
     const { data } = await supabase
       .from('player_stats')
       .select('*')
       .eq('player_name', name)
       .single();
-    
+
     if (!data) {
       await supabase.from('player_stats').insert([{
         player_name: name,
@@ -91,11 +100,11 @@ export default function Home() {
         total_puzzles_completed: 0,
         badges: [],
         stickers: [],
-        avatar: '👧',
+        avatar: '👦',
         streak: 0,
         owned_items: []
       }]);
-      
+
       const stickers = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐸'];
       const randomSticker = stickers[Math.floor(Math.random() * stickers.length)];
       await supabase
@@ -105,10 +114,11 @@ export default function Home() {
     } else if (data.avatar) {
       setSelectedAvatar(data.avatar);
     }
-    
+
     setStartTime(Date.now());
   };
 
+  // ========== HANDLER: DRAG & DROP UNTUK PUZZLE ==========
   const handleDragStart = (e: React.DragEvent, piece: PuzzlePiece) => {
     e.dataTransfer.setData('text/plain', JSON.stringify(piece));
     e.dataTransfer.effectAllowed = 'move';
@@ -140,95 +150,131 @@ export default function Home() {
     setTimeout(() => setFeedback(''), 1500);
   };
 
-  const handleGameComplete = async (stars: number, extra?: any) => {
+  // ========== HANDLER: GAME COMPLETE (UMUM UNTUK SEMUA GAME) ==========
+  const handleGameComplete = useCallback(async (stars: number, extra?: any) => {
+    // Mencegah double execution
+    if (isCompletingRef.current) return;
+    isCompletingRef.current = true;
+
     const gameType = selectedGame;
     const score = extra || (stars * 10);
-    
-    playSound('win');
-    
-    await supabase.from('game_scores').insert([{
-      player_name: playerName,
-      game_type: gameType,
-      stars: stars,
-      score: score,
-      completed_at: new Date()
-    }]);
-    
-    const { data: stats } = await supabase
-      .from('player_stats')
-      .select('*')
-      .eq('player_name', playerName)
-      .single();
-    
-    const newTotalStars = (stats?.total_stars || 0) + stars;
-    const newTotalGames = (stats?.total_puzzles_completed || 0) + 1;
-    
-    let newBadge = null;
-    if (newTotalGames === 5) newBadge = '🎮 Gamer Pemula';
-    if (newTotalStars >= 30) newBadge = '🌟 Bintang Kolektor';
-    if (gameType === 'memory' && stars === 3) newBadge = '🧠 Memory Master';
-    if (gameType === 'timer' && stars === 3) newBadge = '⚡ Speed Demon';
-    if (gameType === 'bubble' && score >= 50) newBadge = '🧮 Math Wizard';
-    if (newTotalGames === 10) newBadge = '🏆 Game Champion';
-    if (newTotalStars >= 100) newBadge = '👑 LEGEND!';
-    
-    if (newBadge) playSound('levelUp');
-    
-    await supabase
-      .from('player_stats')
-      .update({
-        total_stars: newTotalStars,
-        total_puzzles_completed: newTotalGames,
-        badges: newBadge ? [...(stats?.badges || []), newBadge] : stats?.badges
-      })
-      .eq('player_name', playerName);
-    
-    setLastReward({ stars, newBadge, gameType, score });
-    setShowReward(true);
-  };
 
+    playSound('win');
+
+    try {
+      await supabase.from('game_scores').insert([{
+        player_name: playerName,
+        game_type: gameType,
+        stars: stars,
+        score: score,
+        completed_at: new Date()
+      }]);
+
+      const { data: stats } = await supabase
+        .from('player_stats')
+        .select('*')
+        .eq('player_name', playerName)
+        .single();
+
+      const newTotalStars = (stats?.total_stars || 0) + stars;
+      const newTotalGames = (stats?.total_puzzles_completed || 0) + 1;
+
+      let newBadge = null;
+      if (newTotalGames === 5) newBadge = '🎮 Gamer Pemula';
+      if (newTotalStars >= 30) newBadge = '🌟 Bintang Kolektor';
+      if (gameType === 'memory' && stars === 3) newBadge = '🧠 Memory Master';
+      if (gameType === 'timer' && stars === 3) newBadge = '⚡ Speed Demon';
+      if (gameType === 'bubble' && score >= 50) newBadge = '🧮 Math Wizard';
+      if (gameType === 'wordmatch' && stars === 3) newBadge = '📖 Word Master';
+      if (gameType === 'fillblanks' && stars === 3) newBadge = '✏️ Fill Master';
+      if (newTotalGames === 10) newBadge = '🏆 Game Champion';
+      if (newTotalStars >= 100) newBadge = '👑 LEGEND!';
+
+      if (newBadge) playSound('levelUp');
+
+      await supabase
+        .from('player_stats')
+        .update({
+          total_stars: newTotalStars,
+          total_puzzles_completed: newTotalGames,
+          badges: newBadge ? [...(stats?.badges || []), newBadge] : stats?.badges
+        })
+        .eq('player_name', playerName);
+
+      setLastReward({ stars, newBadge, gameType, score });
+      setShowReward(true);
+    } catch (error) {
+      console.error('Error saving game completion:', error);
+    } finally {
+      setTimeout(() => {
+        isCompletingRef.current = false;
+      }, 500);
+    }
+  }, [selectedGame, playerName, playSound]);
+
+  // ========== HANDLER: REWARD MODAL CLOSE ==========
   const handleRewardClose = () => {
     setShowReward(false);
     setGameKey(prev => prev + 1);
     if (selectedGame === 'puzzle') {
       setMatched({});
       setStartTime(Date.now());
+      puzzleCompletedRef.current = false;
     }
   };
 
+  // ========== HELPER: CEK APAKAH SLOT SUDAH TERISI ==========
   const isSlotFilled = (slotId: string) => !!matched[slotId];
 
+  // ========== RENDER GAME BERDASARKAN PILIHAN ==========
   const renderGame = () => {
-    switch(selectedGame) {
+    switch (selectedGame) {
       case 'memory':
         return (
-          <MemoryMatch 
+          <MemoryMatch
             key={gameKey}
-            playerName={playerName} 
-            onComplete={handleGameComplete} 
+            playerName={playerName}
+            onComplete={handleGameComplete}
           />
         );
       case 'timer':
         return (
-          <TimerChallenge 
+          <TimerChallenge
             key={gameKey}
-            onComplete={handleGameComplete} 
+            onComplete={handleGameComplete}
           />
         );
       case 'bubble':
         return (
-          <BubbleMath 
+          <BubbleMath
             key={gameKey}
-            playerName={playerName} 
-            onComplete={handleGameComplete} 
+            playerName={playerName}
+            onComplete={handleGameComplete}
+          />
+        );
+      case 'wordmatch':
+        return (
+          <WordMatch
+            key={gameKey}
+            playerName={playerName}
+            onComplete={handleGameComplete}
+          />
+        );
+      case 'fillblanks':
+        return (
+          <FillBlanks
+            key={gameKey}
+            playerName={playerName}
+            onComplete={handleGameComplete}
           />
         );
       default:
         return (
           <div>
             <h2 className="text-2xl font-bold text-center mb-4">✨ Seret Potongan ke Bayangan ✨</h2>
-            
+
             <div className="flex flex-wrap gap-8 justify-center">
+              {/* Kolom potongan */}
               <div className="flex-1 min-w-[200px]">
                 <div className="grid grid-cols-2 gap-4">
                   {pieces.map((piece) => {
@@ -250,6 +296,7 @@ export default function Home() {
                 </div>
               </div>
 
+              {/* Kolom slot */}
               <div className="flex-1 min-w-[200px]">
                 <div className="grid grid-cols-2 gap-4">
                   {slots.map((slot) => (
@@ -257,11 +304,10 @@ export default function Home() {
                       key={slot.id}
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDrop(e, slot)}
-                      className={`p-4 rounded-2xl border-4 text-center transition min-h-[120px] flex flex-col items-center justify-center ${
-                        isSlotFilled(slot.id)
-                          ? 'bg-green-200 border-green-600'
-                          : 'bg-blue-50 border-blue-400 border-dashed hover:bg-blue-100'
-                      }`}
+                      className={`p-4 rounded-2xl border-4 text-center transition min-h-[120px] flex flex-col items-center justify-center ${isSlotFilled(slot.id)
+                        ? 'bg-green-200 border-green-600'
+                        : 'bg-blue-50 border-blue-400 border-dashed hover:bg-blue-100'
+                        }`}
                     >
                       <div className="text-5xl opacity-60">{slot.imageSilhouette}</div>
                       <div className="text-sm font-semibold mt-2">{slot.label}</div>
@@ -273,7 +319,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            
+
             <div className="text-center mt-6 text-sm text-gray-500">
               💡 Seret gambar hewan ke tempat bayangannya!
             </div>
@@ -282,19 +328,33 @@ export default function Home() {
     }
   };
 
+  // ========== EFFECT: CEK PUZZLE COMPLETION (POWERFULL VERSION) ==========
   useEffect(() => {
-    if (selectedGame === 'puzzle') {
-      const allSlotsFilled = Object.keys(matched).length === slots.length;
-      if (allSlotsFilled && !showReward && isLoggedIn && startTime) {
-        const timeSpent = (Date.now() - startTime) / 1000;
-        let stars = 1;
-        if (timeSpent < 20) stars = 3;
-        else if (timeSpent < 40) stars = 2;
-        handleGameComplete(stars, timeSpent);
-      }
+    // Reset ketika game berganti
+    if (selectedGame !== 'puzzle') {
+      puzzleCompletedRef.current = false;
+      return;
     }
-  }, [matched, selectedGame]);
 
+    // Cek kondisi selesai
+    const allSlotsFilled = Object.keys(matched).length === slots.length;
+    
+    if (allSlotsFilled && !puzzleCompletedRef.current && !showReward && isLoggedIn && startTime) {
+      puzzleCompletedRef.current = true;
+      const timeSpent = (Date.now() - startTime) / 1000;
+      let stars = 1;
+      if (timeSpent < 20) stars = 3;
+      else if (timeSpent < 40) stars = 2;
+      handleGameComplete(stars, timeSpent);
+    }
+  }, [matched, selectedGame, showReward, isLoggedIn, startTime, handleGameComplete]);
+
+  // ========== EFFECT: RESET PUZZLE COMPLETION REF WHEN GAME CHANGES ==========
+  useEffect(() => {
+    puzzleCompletedRef.current = false;
+  }, [selectedGame, gameKey]);
+
+  // ========== LOGIN SCREEN ==========
   if (!isLoggedIn) {
     return (
       <main className="min-h-screen bg-gradient-to-br from-blue-300 to-purple-300 flex items-center justify-center p-4">
@@ -328,6 +388,7 @@ export default function Home() {
     );
   }
 
+  // ========== MAIN GAME SCREEN ==========
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-200 to-yellow-100 p-4">
       <div className="max-w-7xl mx-auto">
@@ -351,6 +412,7 @@ export default function Home() {
               onClick={() => {
                 setIsLoggedIn(false);
                 setMatched({});
+                puzzleCompletedRef.current = false;
               }}
               className="bg-gray-500 text-white px-4 py-2 rounded-full text-sm hover:bg-gray-600 transition"
             >
@@ -366,13 +428,13 @@ export default function Home() {
               setSelectedGame('puzzle');
               setMatched({});
               setStartTime(Date.now());
+              puzzleCompletedRef.current = false;
               playSound('click');
             }}
-            className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${
-              selectedGame === 'puzzle' 
-                ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg' 
-                : 'bg-white text-gray-700 hover:bg-orange-100'
-            }`}
+            className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${selectedGame === 'puzzle'
+              ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg'
+              : 'bg-white text-gray-700 hover:bg-orange-100'
+              }`}
           >
             🧩 Puzzle Hewan
           </button>
@@ -382,11 +444,10 @@ export default function Home() {
               setGameKey(prev => prev + 1);
               playSound('click');
             }}
-            className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${
-              selectedGame === 'memory' 
-                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg' 
-                : 'bg-white text-gray-700 hover:bg-purple-100'
-            }`}
+            className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${selectedGame === 'memory'
+              ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+              : 'bg-white text-gray-700 hover:bg-purple-100'
+              }`}
           >
             🃏 Memory Match
           </button>
@@ -396,11 +457,10 @@ export default function Home() {
               setGameKey(prev => prev + 1);
               playSound('click');
             }}
-            className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${
-              selectedGame === 'timer' 
-                ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-lg' 
-                : 'bg-white text-gray-700 hover:bg-red-100'
-            }`}
+            className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${selectedGame === 'timer'
+              ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-lg'
+              : 'bg-white text-gray-700 hover:bg-red-100'
+              }`}
           >
             ⏱️ Timer Challenge
           </button>
@@ -410,13 +470,38 @@ export default function Home() {
               setGameKey(prev => prev + 1);
               playSound('click');
             }}
-            className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${
-              selectedGame === 'bubble' 
-                ? 'bg-gradient-to-r from-green-500 to-teal-500 text-white shadow-lg' 
-                : 'bg-white text-gray-700 hover:bg-green-100'
-            }`}
+            className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${selectedGame === 'bubble'
+              ? 'bg-gradient-to-r from-green-500 to-teal-500 text-white shadow-lg'
+              : 'bg-white text-gray-700 hover:bg-green-100'
+              }`}
           >
             🎈 Bubble Math
+          </button>
+          <button
+            onClick={() => {
+              setSelectedGame('wordmatch');
+              setGameKey(prev => prev + 1);
+              playSound('click');
+            }}
+            className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${selectedGame === 'wordmatch'
+              ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg'
+              : 'bg-white text-gray-700 hover:bg-teal-100'
+              }`}
+          >
+            📖 Word Match
+          </button>
+          <button
+            onClick={() => {
+              setSelectedGame('fillblanks');
+              setGameKey(prev => prev + 1);
+              playSound('click');
+            }}
+            className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${selectedGame === 'fillblanks'
+                ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg'
+                : 'bg-white text-gray-700 hover:bg-teal-100'
+              }`}
+          >
+            ✏️ Fill Blanks
           </button>
         </div>
 
@@ -424,21 +509,19 @@ export default function Home() {
         <div className="flex gap-2 mb-4 justify-end">
           <button
             onClick={() => setShowSidebar('progress')}
-            className={`px-4 py-2 rounded-full text-sm font-bold transition ${
-              showSidebar === 'progress' 
-                ? 'bg-orange-500 text-white' 
-                : 'bg-gray-200 text-gray-600'
-            }`}
+            className={`px-4 py-2 rounded-full text-sm font-bold transition ${showSidebar === 'progress'
+              ? 'bg-orange-500 text-white'
+              : 'bg-gray-200 text-gray-600'
+              }`}
           >
             📊 Progress Saya
           </button>
           <button
             onClick={() => setShowSidebar('leaderboard')}
-            className={`px-4 py-2 rounded-full text-sm font-bold transition ${
-              showSidebar === 'leaderboard' 
-                ? 'bg-orange-500 text-white' 
-                : 'bg-gray-200 text-gray-600'
-            }`}
+            className={`px-4 py-2 rounded-full text-sm font-bold transition ${showSidebar === 'leaderboard'
+              ? 'bg-orange-500 text-white'
+              : 'bg-gray-200 text-gray-600'
+              }`}
           >
             🏆 Leaderboard
           </button>
@@ -454,8 +537,8 @@ export default function Home() {
 
           <div>
             {showSidebar === 'progress' ? (
-              <ProgressDashboard 
-                playerName={playerName} 
+              <ProgressDashboard
+                playerName={playerName}
                 onAvatarChange={setSelectedAvatar}
               />
             ) : (

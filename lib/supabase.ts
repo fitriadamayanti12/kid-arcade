@@ -14,3 +14,14 @@ export type PlayerStats = {
   stickers: string[]
   daily_sticker_collected: boolean
 }
+
+export interface Question {
+  id: number;
+  word: string;
+  display_word: string;
+  answer: string;
+  hint: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  category: string;
+  points: number;
+}
