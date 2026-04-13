@@ -30,7 +30,7 @@ export default function TimerChallenge({ onComplete }: TimerChallengeProps) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
     }
-  }, [timeLeft, isActive]);
+  }, [timeLeft, isActive, playSound, onComplete]);
 
   useEffect(() => {
     if (Object.keys(matched).length === 3 && isActive) {
@@ -41,13 +41,13 @@ export default function TimerChallenge({ onComplete }: TimerChallengeProps) {
       playSound('win');
       onComplete(stars, timeLeft);
     }
-  }, [matched]);
+  }, [matched, isActive, timeLeft, playSound, onComplete]);
 
   useEffect(() => {
     if (timeLeft === 10 && isActive) {
       playSound('timer');
     }
-  }, [timeLeft]);
+  }, [timeLeft, isActive, playSound]);
 
   const handleDragStart = (e: React.DragEvent, pieceId: string) => {
     if (!isActive) return;
@@ -86,12 +86,12 @@ export default function TimerChallenge({ onComplete }: TimerChallengeProps) {
         </div>
       </div>
 
-      {/* Game Area - Stack on mobile, row on desktop */}
-      <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 md:gap-8 justify-center items-center">
-        {/* Draggable Pieces Column */}
-        <div className="w-full sm:w-auto">
+      {/* Game Area - Responsive wrapping */}
+      <div className="flex flex-col md:flex-row gap-4 md:gap-6 justify-center items-center">
+        {/* Draggable Pieces */}
+        <div className="w-full md:w-auto">
           <h3 className="font-bold text-center text-sm sm:text-base mb-2 sm:mb-3">✨ Seret ke sini:</h3>
-          <div className="flex flex-row sm:flex-row gap-3 sm:gap-4 justify-center">
+          <div className="flex flex-row flex-wrap gap-3 sm:gap-4 justify-center">
             {pieces.map(piece => {
               const isUsed = Object.values(matched).includes(piece.id);
               if (isUsed) return null;
@@ -100,7 +100,7 @@ export default function TimerChallenge({ onComplete }: TimerChallengeProps) {
                   key={piece.id}
                   draggable={isActive}
                   onDragStart={(e) => handleDragStart(e, piece.id)}
-                  className="bg-orange-200 p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl text-4xl sm:text-5xl md:text-6xl cursor-grab active:cursor-grabbing hover:bg-orange-300 transition text-center hover:scale-105"
+                  className="bg-orange-200 p-3 sm:p-4 rounded-xl sm:rounded-2xl text-3xl sm:text-4xl md:text-5xl cursor-grab active:cursor-grabbing hover:bg-orange-300 transition text-center hover:scale-105"
                 >
                   {piece.image}
                 </div>
@@ -109,10 +109,10 @@ export default function TimerChallenge({ onComplete }: TimerChallengeProps) {
           </div>
         </div>
 
-        {/* Target Slots Column */}
-        <div className="w-full sm:w-auto">
+        {/* Target Slots */}
+        <div className="w-full md:w-auto">
           <h3 className="font-bold text-center text-sm sm:text-base mb-2 sm:mb-3">🎯 Taruh di sini:</h3>
-          <div className="flex flex-row sm:flex-row gap-3 sm:gap-4 justify-center">
+          <div className="flex flex-row flex-wrap gap-3 sm:gap-4 justify-center">
             {pieces.map((piece, idx) => {
               const slotId = `slot${idx + 1}`;
               const isFilled = matched[slotId];
@@ -121,7 +121,7 @@ export default function TimerChallenge({ onComplete }: TimerChallengeProps) {
                   key={idx}
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, slotId, piece.id)}
-                  className={`w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-xl sm:rounded-2xl border-4 flex items-center justify-center text-3xl sm:text-4xl md:text-5xl transition ${
+                  className={`w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-xl sm:rounded-2xl border-4 flex items-center justify-center text-2xl sm:text-3xl md:text-4xl transition ${
                     isFilled
                       ? 'bg-green-300 border-green-600'
                       : 'bg-gray-100 border-dashed border-gray-400 hover:bg-gray-200'
@@ -140,7 +140,7 @@ export default function TimerChallenge({ onComplete }: TimerChallengeProps) {
         💡 Seret gambar ke kotak target yang sesuai!
       </div>
 
-      {/* Progress Bar (optional) */}
+      {/* Progress Bar */}
       <div className="mt-4 sm:mt-6">
         <div className="bg-gray-200 rounded-full h-1.5 sm:h-2 overflow-hidden">
           <div 
