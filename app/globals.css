@@ -51,3 +51,233 @@ body {
 .animate-in {
   animation: zoom-in 0.2s ease-out;
 }
+
+/* app/globals.css - Tambahkan di akhir file */
+
+/* ========== MOBILE RESPONSIVE STYLES ========== */
+
+/* Tablet & Mobile (max-width: 1024px) */
+@media (max-width: 1024px) {
+  /* Header */
+  .flex.justify-between.items-center {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  /* Game buttons */
+  .flex.gap-3.mb-6 {
+    gap: 0.5rem;
+  }
+  
+  .px-6.py-3 {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Mobile (max-width: 768px) */
+@media (max-width: 768px) {
+  /* Layout utama - stack columns */
+  .grid.lg\:grid-cols-3 {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .lg\:col-span-2 {
+    width: 100%;
+    order: 1;
+  }
+  
+  /* Sidebar jadi di bawah */
+  .lg\:col-span-1 {
+    width: 100%;
+    order: 2;
+    margin-top: 1rem;
+  }
+  
+  /* Game area padding */
+  .bg-white\/80.rounded-3xl.p-6 {
+    padding: 1rem;
+  }
+  
+  /* Puzzle grid - dari 2 kolom jadi 1 kolom */
+  .grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+  
+  /* Memory match grid - dari 4 kolom jadi 2 kolom */
+  .grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  /* Bubble math - posisi balon lebih rapat */
+  .relative.h-\[400px\] {
+    height: 300px;
+  }
+  
+  .text-5xl {
+    font-size: 2.5rem;
+  }
+  
+  /* Tombol game selection - wrap ke 2 baris */
+  .flex.gap-3.mb-6 {
+    gap: 0.5rem;
+    justify-content: center;
+  }
+  
+  button.px-6.py-3 {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  /* Header title */
+  .text-3xl.md\:text-4xl {
+    font-size: 1.5rem;
+  }
+  
+  /* Avatar size */
+  .text-5xl {
+    font-size: 2.5rem;
+  }
+  
+  /* Progress dashboard */
+  .bg-white\/90.rounded-2xl.p-6 {
+    padding: 1rem;
+  }
+  
+  /* Leaderboard */
+  .bg-gradient-to-br.p-5 {
+    padding: 1rem;
+  }
+  
+  /* Feedback toast */
+  .fixed.bottom-8 {
+    bottom: 1rem;
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+    white-space: nowrap;
+  }
+  
+  /* Reward modal */
+  .max-w-md {
+    max-width: 90%;
+    margin: 0 auto;
+  }
+  
+  .text-7xl {
+    font-size: 3rem;
+  }
+  
+  .text-3xl {
+    font-size: 1.5rem;
+  }
+}
+
+/* Mobile kecil (max-width: 480px) */
+@media (max-width: 480px) {
+  /* Game buttons lebih kecil */
+  button.px-6.py-3 {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.7rem;
+  }
+  
+  /* Emoji di puzzle */
+  .text-5xl {
+    font-size: 2rem;
+  }
+  
+  .text-lg {
+    font-size: 0.875rem;
+  }
+  
+  /* Memory match kartu */
+  .h-32 {
+    height: 80px;
+  }
+  
+  .text-4xl {
+    font-size: 1.5rem;
+  }
+  
+  /* Fill blanks input */
+  .w-64 {
+    width: 160px;
+  }
+  
+  .text-5xl.font-mono {
+    font-size: 1.8rem;
+    word-break: break-all;
+  }
+  
+  /* Progress bar text */
+  .text-sm {
+    font-size: 0.7rem;
+  }
+  
+  /* Header */
+  h1.text-3xl {
+    font-size: 1.2rem;
+  }
+  
+  /* Sidebar toggle buttons */
+  .px-4.py-2 {
+    padding: 0.3rem 0.8rem;
+    font-size: 0.7rem;
+  }
+  
+  /* Reward modal */
+  .text-7xl {
+    font-size: 2.5rem;
+  }
+  
+  .text-2xl {
+    font-size: 1rem;
+  }
+}
+
+/* Landscape mode untuk mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  .min-h-screen {
+    min-height: auto;
+  }
+  
+  .relative.h-\[400px\] {
+    height: 200px;
+  }
+  
+  .grid-cols-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .h-28 {
+    height: 70px;
+  }
+}
+
+/* Touch-friendly adjustments untuk mobile */
+@media (max-width: 768px) {
+  /* Perbesar area tap untuk drag & drop */
+  .cursor-grab {
+    cursor: pointer;
+    min-height: 80px;
+  }
+  
+  /* Spacing yang lebih nyaman untuk touch */
+  .gap-4 {
+    gap: 0.75rem;
+  }
+  
+  .p-4 {
+    padding: 0.75rem;
+  }
+  
+  /* Input field lebih besar untuk touch */
+  input.p-3 {
+    padding: 0.75rem;
+    font-size: 1rem;
+  }
+  
+  button.px-8.py-3 {
+    padding: 0.75rem 1rem;
+  }
+}

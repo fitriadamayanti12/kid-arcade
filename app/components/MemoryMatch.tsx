@@ -70,7 +70,7 @@ export default function MemoryMatch({ playerName, onComplete }: MemoryMatchProps
     if (newFlipped.length === 2) {
       setMoves(moves + 1);
       const [first, second] = newFlipped;
-      
+
       if (cards[first].emoji === cards[second].emoji) {
         playSound('match');
         setTimeout(() => {
@@ -106,28 +106,29 @@ export default function MemoryMatch({ playerName, onComplete }: MemoryMatchProps
     }
   };
 
+  // app/components/MemoryMatch.tsx - Update responsive grid
+
   return (
-    <div className="p-6">
-      <div className="flex justify-between mb-6">
-        <div className="text-xl">🎯 Langkah: {moves}</div>
+    <div className="p-3 sm:p-4 md:p-6">
+      <div className="flex justify-between mb-4 sm:mb-6">
+        <div className="text-sm sm:text-base md:text-xl">🎯 Langkah: {moves}</div>
         <button
           onClick={startNewGame}
-          className="bg-green-500 text-white px-4 py-2 rounded-full text-sm hover:bg-green-600 transition"
+          className="bg-green-500 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm hover:bg-green-600 transition"
         >
           Game Baru 🔄
         </button>
       </div>
 
-      <div className="grid grid-cols-4 gap-3 max-w-md mx-auto">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 max-w-md mx-auto">
         {cards.map((card, index) => (
           <button
             key={card.id}
             onClick={() => handleCardClick(index)}
-            className={`aspect-square text-4xl rounded-2xl transition-all transform ${
-              card.isFlipped || card.isMatched
+            className={`aspect-square text-2xl sm:text-3xl md:text-4xl rounded-xl sm:rounded-2xl transition-all transform ${card.isFlipped || card.isMatched
                 ? 'bg-yellow-300 rotate-0'
                 : 'bg-blue-500 rotate-180'
-            } shadow-lg hover:scale-105`}
+              } shadow-lg hover:scale-105`}
           >
             <div className="flex items-center justify-center h-full">
               {(card.isFlipped || card.isMatched) ? card.emoji : '❓'}
@@ -135,8 +136,8 @@ export default function MemoryMatch({ playerName, onComplete }: MemoryMatchProps
           </button>
         ))}
       </div>
-      
-      <div className="text-center mt-6 text-sm text-gray-500">
+
+      <div className="text-center mt-4 sm:mt-6 text-xs sm:text-sm text-gray-500">
         💡 Klik kartu untuk membuka, cari pasangan yang sama!
       </div>
     </div>

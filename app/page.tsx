@@ -338,7 +338,7 @@ export default function Home() {
 
     // Cek kondisi selesai
     const allSlotsFilled = Object.keys(matched).length === slots.length;
-    
+
     if (allSlotsFilled && !puzzleCompletedRef.current && !showReward && isLoggedIn && startTime) {
       puzzleCompletedRef.current = true;
       const timeSpent = (Date.now() - startTime) / 1000;
@@ -389,21 +389,23 @@ export default function Home() {
   }
 
   // ========== MAIN GAME SCREEN ==========
+  // app/page.tsx - Update bagian return (Main Game Screen)
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-200 to-yellow-100 p-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
-          <div className="flex items-center gap-3">
-            <span className="text-5xl">{selectedAvatar}</span>
-            <h1 className="text-3xl md:text-4xl font-bold text-orange-600">
+    <main className="min-h-screen bg-gradient-to-br from-blue-200 to-yellow-100">
+      <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6 max-w-7xl mx-auto">
+        {/* Header - Responsive */}
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-4 sm:mb-6 gap-3 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="text-3xl sm:text-4xl md:text-5xl">{selectedAvatar}</span>
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-orange-600 text-center sm:text-left break-words">
               🎮 {playerName}&apos;s Arcade
             </h1>
           </div>
           <div className="flex gap-2">
             <button
               onClick={handleToggleSound}
-              className="bg-gray-500 text-white px-3 py-2 rounded-full text-sm hover:bg-gray-600 transition"
+              className="bg-gray-500 text-white px-2 sm:px-3 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm hover:bg-gray-600 transition"
               title={soundEnabled ? 'Matikan Suara' : 'Hidupkan Suara'}
             >
               {soundEnabled ? '🔊' : '🔇'}
@@ -414,15 +416,15 @@ export default function Home() {
                 setMatched({});
                 puzzleCompletedRef.current = false;
               }}
-              className="bg-gray-500 text-white px-4 py-2 rounded-full text-sm hover:bg-gray-600 transition"
+              className="bg-gray-500 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm hover:bg-gray-600 transition"
             >
               Ganti Pemain
             </button>
           </div>
         </div>
 
-        {/* Game Selection Buttons */}
-        <div className="flex gap-3 mb-6 flex-wrap justify-center">
+        {/* Game Selection Buttons - Responsive Wrap */}
+        <div className="flex flex-wrap gap-1.5 sm:gap-2 md:gap-3 mb-4 sm:mb-6 justify-center">
           <button
             onClick={() => {
               setSelectedGame('puzzle');
@@ -431,12 +433,12 @@ export default function Home() {
               puzzleCompletedRef.current = false;
               playSound('click');
             }}
-            className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${selectedGame === 'puzzle'
-              ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg'
-              : 'bg-white text-gray-700 hover:bg-orange-100'
+            className={`px-2 sm:px-3 md:px-4 lg:px-6 py-1.5 sm:py-2 md:py-3 rounded-full font-bold transition transform hover:scale-105 text-xs sm:text-sm md:text-base ${selectedGame === 'puzzle'
+                ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg'
+                : 'bg-white text-gray-700 hover:bg-orange-100'
               }`}
           >
-            🧩 Puzzle Hewan
+            🧩 Puzzle
           </button>
           <button
             onClick={() => {
@@ -444,12 +446,12 @@ export default function Home() {
               setGameKey(prev => prev + 1);
               playSound('click');
             }}
-            className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${selectedGame === 'memory'
-              ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
-              : 'bg-white text-gray-700 hover:bg-purple-100'
+            className={`px-2 sm:px-3 md:px-4 lg:px-6 py-1.5 sm:py-2 md:py-3 rounded-full font-bold transition transform hover:scale-105 text-xs sm:text-sm md:text-base ${selectedGame === 'memory'
+                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                : 'bg-white text-gray-700 hover:bg-purple-100'
               }`}
           >
-            🃏 Memory Match
+            🃏 Memory
           </button>
           <button
             onClick={() => {
@@ -457,12 +459,12 @@ export default function Home() {
               setGameKey(prev => prev + 1);
               playSound('click');
             }}
-            className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${selectedGame === 'timer'
-              ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-lg'
-              : 'bg-white text-gray-700 hover:bg-red-100'
+            className={`px-2 sm:px-3 md:px-4 lg:px-6 py-1.5 sm:py-2 md:py-3 rounded-full font-bold transition transform hover:scale-105 text-xs sm:text-sm md:text-base ${selectedGame === 'timer'
+                ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-lg'
+                : 'bg-white text-gray-700 hover:bg-red-100'
               }`}
           >
-            ⏱️ Timer Challenge
+            ⏱️ Timer
           </button>
           <button
             onClick={() => {
@@ -470,12 +472,12 @@ export default function Home() {
               setGameKey(prev => prev + 1);
               playSound('click');
             }}
-            className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${selectedGame === 'bubble'
-              ? 'bg-gradient-to-r from-green-500 to-teal-500 text-white shadow-lg'
-              : 'bg-white text-gray-700 hover:bg-green-100'
+            className={`px-2 sm:px-3 md:px-4 lg:px-6 py-1.5 sm:py-2 md:py-3 rounded-full font-bold transition transform hover:scale-105 text-xs sm:text-sm md:text-base ${selectedGame === 'bubble'
+                ? 'bg-gradient-to-r from-green-500 to-teal-500 text-white shadow-lg'
+                : 'bg-white text-gray-700 hover:bg-green-100'
               }`}
           >
-            🎈 Bubble Math
+            🎈 Math
           </button>
           <button
             onClick={() => {
@@ -483,12 +485,12 @@ export default function Home() {
               setGameKey(prev => prev + 1);
               playSound('click');
             }}
-            className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${selectedGame === 'wordmatch'
-              ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg'
-              : 'bg-white text-gray-700 hover:bg-teal-100'
+            className={`px-2 sm:px-3 md:px-4 lg:px-6 py-1.5 sm:py-2 md:py-3 rounded-full font-bold transition transform hover:scale-105 text-xs sm:text-sm md:text-base ${selectedGame === 'wordmatch'
+                ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg'
+                : 'bg-white text-gray-700 hover:bg-teal-100'
               }`}
           >
-            📖 Word Match
+            📖 Word
           </button>
           <button
             onClick={() => {
@@ -496,46 +498,45 @@ export default function Home() {
               setGameKey(prev => prev + 1);
               playSound('click');
             }}
-            className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${selectedGame === 'fillblanks'
+            className={`px-2 sm:px-3 md:px-4 lg:px-6 py-1.5 sm:py-2 md:py-3 rounded-full font-bold transition transform hover:scale-105 text-xs sm:text-sm md:text-base ${selectedGame === 'fillblanks'
                 ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg'
                 : 'bg-white text-gray-700 hover:bg-teal-100'
               }`}
           >
-            ✏️ Fill Blanks
+            ✏️ Blanks
           </button>
         </div>
 
-        {/* Sidebar Toggle */}
-        <div className="flex gap-2 mb-4 justify-end">
+        {/* Sidebar Toggle - Responsive */}
+        <div className="flex gap-2 mb-3 sm:mb-4 justify-end">
           <button
             onClick={() => setShowSidebar('progress')}
-            className={`px-4 py-2 rounded-full text-sm font-bold transition ${showSidebar === 'progress'
-              ? 'bg-orange-500 text-white'
-              : 'bg-gray-200 text-gray-600'
+            className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold transition ${showSidebar === 'progress'
+                ? 'bg-orange-500 text-white'
+                : 'bg-gray-200 text-gray-600'
               }`}
           >
-            📊 Progress Saya
+            📊 Progress
           </button>
           <button
             onClick={() => setShowSidebar('leaderboard')}
-            className={`px-4 py-2 rounded-full text-sm font-bold transition ${showSidebar === 'leaderboard'
-              ? 'bg-orange-500 text-white'
-              : 'bg-gray-200 text-gray-600'
+            className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold transition ${showSidebar === 'leaderboard'
+                ? 'bg-orange-500 text-white'
+                : 'bg-gray-200 text-gray-600'
               }`}
           >
             🏆 Leaderboard
           </button>
         </div>
 
-        {/* Main Game Area */}
-        <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <div className="bg-white/80 rounded-3xl p-6 shadow-xl min-h-[500px] transition-all">
+        {/* Main Game Area - Stack on mobile */}
+        <div className="flex flex-col lg:grid lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="lg:col-span-2 order-1 lg:order-none">
+            <div className="bg-white/80 rounded-2xl sm:rounded-3xl p-3 sm:p-4 md:p-6 shadow-xl min-h-[400px] sm:min-h-[500px] transition-all">
               {renderGame()}
             </div>
           </div>
-
-          <div>
+          <div className="order-2 lg:order-none">
             {showSidebar === 'progress' ? (
               <ProgressDashboard
                 playerName={playerName}
@@ -547,9 +548,9 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Feedback untuk puzzle game */}
+        {/* Feedback untuk puzzle game - Responsive */}
         {feedback && selectedGame === 'puzzle' && (
-          <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-yellow-300 text-2xl px-8 py-4 rounded-full shadow-lg animate-bounce z-50">
+          <div className="fixed bottom-4 sm:bottom-8 left-1/2 transform -translate-x-1/2 bg-yellow-300 text-sm sm:text-xl md:text-2xl px-3 sm:px-6 md:px-8 py-2 sm:py-3 md:py-4 rounded-full shadow-lg animate-bounce z-50 whitespace-nowrap">
             {feedback}
           </div>
         )}
