@@ -22,6 +22,7 @@ const gameLabels: Record<string, string> = {
   bubble: '🎈 Bubble Math',
   wordmatch: '📖 Word Match',
   fillblanks: '✏️ Fill Blanks',
+  aigame: '🤖 AI Game',
   all: '🏆 Semua Game'
 };
 

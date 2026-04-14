@@ -1,0 +1,164 @@
+/* public/styles/ai-game-iframe.css */
+/* CSS untuk game hasil generate AI - ramah anak usia 6 tahun */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Comic Neue', 'Comic Sans MS', 'Chalkboard SE', 'Segoe UI Emoji', cursive !important;
+  font-size: 20px !important;
+  line-height: 1.5 !important;
+  padding: 20px !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  min-height: 100vh !important;
+}
+
+/* Container utama */
+.game-container,
+.container,
+main {
+  max-width: 800px !important;
+  margin: 0 auto !important;
+  background: white !important;
+  border-radius: 30px !important;
+  padding: 25px !important;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2) !important;
+}
+
+/* Judul */
+h1, h2, h3, .title {
+  font-size: 32px !important;
+  font-weight: bold !important;
+  text-align: center !important;
+  margin-bottom: 25px !important;
+  color: #4a5568 !important;
+}
+
+/* Pertanyaan - FOKUS UTAMA */
+.question,
+.quiz-question,
+[class*="question"],
+.soal {
+  font-size: 32px !important;
+  font-weight: bold !important;
+  background: #fef3c7 !important;
+  padding: 25px !important;
+  border-radius: 25px !important;
+  text-align: center !important;
+  margin: 20px 0 !important;
+  color: #92400e !important;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1) !important;
+  border: 3px solid #f59e0b !important;
+}
+
+/* Grid pilihan jawaban */
+.options,
+.choices,
+[class*="options"] {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+  gap: 15px !important;
+  margin: 25px 0 !important;
+}
+
+/* Tombol pilihan */
+button,
+.btn,
+.option,
+.choice,
+[class*="option"],
+[class*="choice"] {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+  border: none !important;
+  font-size: 22px !important;
+  font-weight: bold !important;
+  padding: 16px 20px !important;
+  border-radius: 50px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  font-family: inherit !important;
+  width: 100% !important;
+  text-align: center !important;
+  box-shadow: 0 5px 10px rgba(0,0,0,0.2) !important;
+}
+
+button:hover,
+.btn:hover {
+  transform: scale(1.02) !important;
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46a0 100%) !important;
+}
+
+button:active {
+  transform: scale(0.98) !important;
+}
+
+/* Skor */
+.score,
+[class*="score"] {
+  font-size: 28px !important;
+  font-weight: bold !important;
+  text-align: center !important;
+  margin: 20px 0 !important;
+  color: #2d3748 !important;
+  background: #e2e8f0 !important;
+  padding: 15px !important;
+  border-radius: 50px !important;
+}
+
+/* Toast notification */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Responsif mobile */
+@media (max-width: 640px) {
+  body {
+    padding: 10px !important;
+  }
+  
+  .game-container,
+  .container,
+  main {
+    padding: 15px !important;
+  }
+  
+  h1, h2, h3 {
+    font-size: 24px !important;
+  }
+  
+  .question,
+  .quiz-question,
+  [class*="question"] {
+    font-size: 24px !important;
+    padding: 18px !important;
+  }
+  
+  button,
+  .btn,
+  .option,
+  .choice {
+    font-size: 18px !important;
+    padding: 12px 16px !important;
+  }
+  
+  .score,
+  [class*="score"] {
+    font-size: 22px !important;
+  }
+  
+  .options,
+  .choices {
+    grid-template-columns: 1fr !important;
+  }
+}
