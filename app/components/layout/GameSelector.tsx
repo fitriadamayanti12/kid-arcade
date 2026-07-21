@@ -2,7 +2,7 @@
 
 import { SoundType } from '@/hooks/useSoundEffect';
 
-type GameType = 'puzzle' | 'memory' | 'timer' | 'bubble' | 'wordmatch' | 'fillblanks' | 'aigame' | 'countobjects' | 'pizzafraction' | 'mathadventure' | 'mathdetective' | 'numberninja' | 'mathscrabble' | 'mathcraft' | 'mathracer' | 'dicequest' | 'mathtower';
+type GameType = 'puzzle' | 'memory' | 'timer' | 'bubble' | 'wordmatch' | 'fillblanks' | 'aigame' | 'countobjects' | 'pizzafraction' | 'mathadventure' | 'mathdetective' | 'numberninja' | 'mathscrabble' | 'mathcraft' | 'mathracer' | 'dicequest' | 'mathtower' | 'multblitz' | 'geoquest' | 'magictable' | 'bangunyuk';
 
 interface GameSelectorProps {
   selectedGame: GameType;
@@ -18,6 +18,8 @@ const games = [
   { id: 'numberninja' as const, label: '🥷 Ninja', color: 'from-gray-600 to-gray-800', grade: '3', category: 'Basic' },
   { id: 'mathcraft' as const, label: '🏗️ Craft', color: 'from-amber-500 to-yellow-600', grade: '3', category: 'Basic' },
   { id: 'dicequest' as const, label: '🎲 DiceQuest', color: 'from-amber-500 to-red-500', grade: '3', category: 'Basic' },
+  { id: 'multblitz' as const, label: '⚡ Blitz', color: 'from-yellow-500 to-red-500', grade: '3', category: 'Basic' },
+  { id: 'magictable' as const, label: '🌟 Tabel Ajaib', color: 'from-yellow-400 to-amber-500', grade: '3', category: 'Basic' },
   
   // Kelas 4-6: Intermediate Math
   { id: 'memory' as const, label: '🃏 Memory', color: 'from-purple-500 to-pink-500', grade: '4-6', category: 'Intermediate' },
@@ -28,6 +30,8 @@ const games = [
   { id: 'mathscrabble' as const, label: '🔤 Scrabble', color: 'from-teal-600 to-emerald-600', grade: '6', category: 'Intermediate' },
   { id: 'mathracer' as const, label: '🏎️ Racer', color: 'from-red-600 to-orange-600', grade: '6', category: 'Intermediate' },
   { id: 'mathtower' as const, label: '🏰 Tower', color: 'from-stone-500 to-stone-700', grade: '6', category: 'Intermediate' },
+  { id: 'geoquest' as const, label: '📐 GeoQuest', color: 'from-violet-500 to-purple-500', grade: '6', category: 'Intermediate' },
+  { id: 'bangunyuk' as const, label: '🏠 Bangun Yuk', color: 'from-emerald-500 to-green-600', grade: '6', category: 'Intermediate' },
   
   // Language & Logic
   { id: 'wordmatch' as const, label: '📖 Word', color: 'from-teal-500 to-cyan-500', grade: 'All', category: 'Language' },

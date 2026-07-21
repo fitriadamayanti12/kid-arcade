@@ -23,6 +23,10 @@ const CountObjects = dynamic(() => import('@/app/components/games/CountObjects')
 import PizzaFraction from '@/app/components/games/PizzaFraction';
 import DiceQuest from '@/app/components/games/DiceQuest';
 import MathTower from '@/app/components/games/MathTower';
+import MultiplicationBlitz from '@/app/components/games/MultiplicationBlitz';
+import GeoQuest from '@/app/components/games/GeoQuest';
+import MagicTable from '@/app/components/games/MagicTable';
+import BangunYuk from '@/app/components/games/BangunYuk';
 
 const MathAdventure = dynamic(() => import('@/app/components/games/MathAdventure'), { ssr: false });
 const MathDetective = dynamic(() => import('@/app/components/games/MathDetective'), { ssr: false });
@@ -31,7 +35,7 @@ const MathScrabble = dynamic(() => import('@/app/components/games/MathScrabble')
 const MathCraft = dynamic(() => import('@/app/components/games/MathCraft'), { ssr: false });
 const MathRacer = dynamic(() => import('@/app/components/games/MathRacer'), { ssr: false });
 
-type GameType = 'puzzle' | 'memory' | 'timer' | 'bubble' | 'wordmatch' | 'fillblanks' | 'aigame' | 'countobjects' | 'pizzafraction' | 'mathadventure' | 'mathdetective' | 'numberninja' | 'mathscrabble' | 'mathcraft' | 'mathracer' | 'dicequest' | 'mathtower';
+type GameType = 'puzzle' | 'memory' | 'timer' | 'bubble' | 'wordmatch' | 'fillblanks' | 'aigame' | 'countobjects' | 'pizzafraction' | 'mathadventure' | 'mathdetective' | 'numberninja' | 'mathscrabble' | 'mathcraft' | 'mathracer' | 'dicequest' | 'mathtower' | 'multblitz' | 'geoquest' | 'magictable' | 'bangunyuk';
 
 // Loading fallback component
 const GameLoading = () => (
@@ -186,6 +190,10 @@ export default function Home() {
       if (gameType === 'mathracer' && extra?.position === 1) newBadge = '🏎️ Racing Champion';
       if (gameType === 'dicequest' && extra?.treasures >= 3) newBadge = '🎲 Dice Master';
       if (gameType === 'mathtower' && extra?.wave >= 5) newBadge = '🏰 Tower Defender';
+      if (gameType === 'multblitz' && extra?.tablesMastered >= 5) newBadge = '⚡ Multiplication Master';
+      if (gameType === 'geoquest' && extra?.totalMastered >= 6) newBadge = '📐 Geo Master';
+      if (gameType === 'magictable' && extra?.tablesLearned >= 5) newBadge = '🌟 Table Wizard';
+      if (gameType === 'bangunyuk' && extra?.learnedShapes >= 4) newBadge = '🏠 Geometry Master';
       if (newTotalGames === 10) newBadge = '🏆 Game Champion';
       if (newTotalStars >= 100) newBadge = '👑 LEGEND!';
       if (newBadge) playSound('levelUp');
@@ -251,6 +259,14 @@ export default function Home() {
         return <DiceQuest key={gameKey} onComplete={handleGameComplete} />;
       case 'mathtower': 
         return <MathTower key={gameKey} onComplete={handleGameComplete} />;
+      case 'multblitz': 
+        return <MultiplicationBlitz key={gameKey} onComplete={handleGameComplete} />;
+      case 'geoquest': 
+        return <GeoQuest key={gameKey} onComplete={handleGameComplete} />;
+      case 'magictable': 
+        return <MagicTable key={gameKey} onComplete={handleGameComplete} />;
+      case 'bangunyuk': 
+        return <BangunYuk key={gameKey} onComplete={handleGameComplete} />;
       default: 
         return <GameLoading />;
     }
