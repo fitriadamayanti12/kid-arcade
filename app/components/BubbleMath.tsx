@@ -3,190 +3,174 @@
 
 import { useState, useEffect } from 'react';
 import { useSoundEffect } from '@/hooks/useSoundEffect';
+import { useThemeStyles } from '@/hooks/useThemeStyles';
 
 interface Bubble {
   id: number;
   number: number;
   x: number;
   y: number;
+  size: number;
+  speed: number;
 }
 
 interface BubbleMathProps {
   playerName: string;
-  onComplete: (score: number) => void;
+  onComplete: (stars: number, extra?: any) => void; // ← FIX
 }
 
 export default function BubbleMath({ playerName, onComplete }: BubbleMathProps) {
+  const theme = useThemeStyles();
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
   const [score, setScore] = useState(0);
-  const [currentQuestion, setCurrentQuestion] = useState({ text: '', answer: 0 });
+  const [q, setQ] = useState({ text: '', answer: 0 });
   const [message, setMessage] = useState('');
+  const [streak, setStreak] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(60);
   const { playSound } = useSoundEffect();
 
-  // Generate soal matematika (hanya PENJUMLAHAN, tidak ada pengurangan)
-  const generateNewQuestion = () => {
-    // Bilangan 1-10 agar tidak terlalu besar
-    const a = Math.floor(Math.random() * 10) + 1;
-    const b = Math.floor(Math.random() * 10) + 1;
-    const answer = a + b; // HANYA PENJUMLAHAN
-
-    setCurrentQuestion({
-      text: `${a} + ${b} = ?`,
-      answer: answer
-    });
-
-    return answer;
-  };
-
-  // Generate balon dengan PASTI ada jawaban yang benar
-  const generateBubbles = (correctAnswer: number) => {
-    const newBubbles: Bubble[] = [];
-
-    // Pastikan jawaban benar ada di antara 2-20 (karena penjumlahan max 20)
-    const safeAnswer = Math.min(20, Math.max(2, correctAnswer));
-
-    // Buat pilihan angka yang selalu mencakup jawaban benar
-    let possibleNumbers = [
-      safeAnswer,                           // jawaban benar (PASTI ADA)
-      safeAnswer + 1,                       // +1
-      safeAnswer - 1,                       // -1 (jika > 0)
-      safeAnswer + 2,                       // +2
-      Math.max(1, safeAnswer - 2),          // -2 (minimal 1)
-      safeAnswer + 3,                       // +3
+  const generateQuestion = () => {
+    const types = [
+      () => { const a = Math.floor(Math.random() * 15) + 1; const b = Math.floor(Math.random() * 10) + 1; return { text: `${a} + ${b} = ?`, answer: a + b }; },
+      () => { const a = Math.floor(Math.random() * 12) + 5; const b = Math.floor(Math.random() * a) + 1; return { text: `${a} - ${b} = ?`, answer: a - b }; },
+      () => { const a = Math.floor(Math.random() * 6) + 2; const b = Math.floor(Math.random() * 6) + 2; return { text: `${a} × ${b} = ?`, answer: a * b }; },
     ];
+    const gen = types[Math.floor(Math.random() * types.length)]();
+    setQ(gen);
+    return gen.answer;
+  };
 
-    // Filter angka yang valid (1-20)
-    possibleNumbers = possibleNumbers.filter(n => n >= 1 && n <= 20);
-
-    // Ambil 6 angka unik
-    const uniqueNumbers = [...new Set(possibleNumbers)];
-
-    // Jika kurang dari 6, tambah angka random
-    while (uniqueNumbers.length < 6) {
-      const randomNum = Math.floor(Math.random() * 20) + 1;
-      if (!uniqueNumbers.includes(randomNum)) {
-        uniqueNumbers.push(randomNum);
-      }
+  const generateBubbles = (answer: number) => {
+    const nums = new Set<number>([answer]);
+    while (nums.size < 6) {
+      const n = answer + (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 6) + 1);
+      if (n > 0 && n <= 50) nums.add(n);
     }
-
-    // Acak urutan angka
-    const shuffledNumbers = uniqueNumbers.sort(() => Math.random() - 0.5);
-
-    // Buat balon dengan posisi random
-    for (let i = 0; i < shuffledNumbers.length; i++) {
-      newBubbles.push({
-        id: i,
-        number: shuffledNumbers[i],
-        x: Math.random() * 70 + 15,  // 15% - 85%
-        y: Math.random() * 55 + 20,   // 20% - 75%
-      });
-    }
-
+    const arr = Array.from(nums).sort(() => Math.random() - 0.5);
+    const newBubbles: Bubble[] = arr.map((n, i) => ({
+      id: Date.now() + i,
+      number: n,
+      x: 10 + (i * 15) % 80,
+      y: 20 + (i * 10) % 50,
+      size: 50 + Math.random() * 30,
+      speed: 1 + Math.random() * 2,
+    }));
     setBubbles(newBubbles);
-
-    // Debug: pastikan jawaban benar ada di balon
-    const hasCorrectAnswer = newBubbles.some(b => b.number === safeAnswer);
-    if (!hasCorrectAnswer) {
-      console.warn('Warning: Jawaban benar tidak ada di balon!', safeAnswer);
-      // Fix: ganti balon pertama dengan jawaban benar
-      if (newBubbles.length > 0) {
-        newBubbles[0].number = safeAnswer;
-        setBubbles([...newBubbles]);
-      }
-    }
   };
 
-  const handleBubbleClick = (bubble: Bubble) => {
-    if (bubble.number === currentQuestion.answer) {
-      // Jawaban benar!
-      const newScore = score + 10;
-      setScore(newScore);
-      setMessage('✅ Benar! +10 poin');
-      playSound('correct');
-
-      // Cek apakah sudah menang (skor 50)
-      if (newScore >= 50) {
-        setMessage('🎉 SELAMAT! Kamu hebat! 🎉');
-        playSound('win');
-        onComplete(newScore);
-        return;
-      }
-
-      // Generate soal dan balon baru
-      const newAnswer = generateNewQuestion();
+  const handlePop = (bubble: Bubble) => {
+    if (bubble.number === q.answer) {
+      const bonus = streak >= 3 ? 5 : 0;
+      setScore(s => s + 10 + bonus);
+      setStreak(s => s + 1);
+      setMessage(`✅ Benar! +${10 + bonus} ⭐`);
+      playSound('win');
+      const newAnswer = generateQuestion();
       generateBubbles(newAnswer);
-
-      // Hapus pesan setelah 1.5 detik
-      setTimeout(() => setMessage(''), 1500);
     } else {
-      // Jawaban salah - kurangi poin
-      const newScore = Math.max(0, score - 5);
-      setScore(newScore);
-      setMessage(`❌ Salah! Jawabannya ${currentQuestion.answer}. -5 poin`);
-      playSound('wrong');
-
-      setTimeout(() => setMessage(''), 1500);
+      setStreak(0);
+      setScore(s => Math.max(0, s - 5));
+      setMessage(`❌ Jawaban: ${q.answer}`);
+      playSound('click');
     }
+    setTimeout(() => setMessage(''), 1200);
   };
 
-  // Inisialisasi game
   useEffect(() => {
-    const firstAnswer = generateNewQuestion();
-    generateBubbles(firstAnswer);
+    const answer = generateQuestion();
+    generateBubbles(answer);
   }, []);
 
-  // app/components/BubbleMath.tsx - Responsive version
+  // Timer
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      const stars = score >= 100 ? 3 : score >= 60 ? 2 : 1;
+      onComplete(stars, { score, streak });
+      return;
+    }
+    const t = setTimeout(() => setTimeLeft(l => l - 1), 1000);
+    return () => clearTimeout(t);
+  }, [timeLeft]);
 
   return (
-    <div className="p-3 sm:p-4 md:p-6">
-      <div className="text-center mb-4 sm:mb-6">
-        <div className="text-xl sm:text-2xl md:text-4xl font-bold text-purple-600 mb-2">
-          🎈 Skor: {score} / 50
-        </div>
-        <div className="text-base sm:text-lg md:text-2xl bg-gradient-to-r from-yellow-200 to-orange-200 inline-block px-4 sm:px-6 md:px-8 py-2 sm:py-3 md:py-4 rounded-xl sm:rounded-2xl my-3 sm:my-4 shadow-lg">
-          🤔 {currentQuestion.text}
-        </div>
-        {message && (
-          <div className={`text-sm sm:text-base md:text-lg font-bold ${message.includes('Benar') ? 'text-green-600' : 'text-red-600'} animate-bounce`}>
-            {message}
-          </div>
-        )}
+    <div style={{ padding: '16px', maxWidth: '500px', margin: '0 auto', textAlign: 'center' }}>
+      {/* HUD */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '14px' }}>
+        <span style={{ color: theme.textSecondary }}>⭐ {score}</span>
+        <span style={{ color: timeLeft <= 15 ? '#ef4444' : theme.textSecondary }}>⏱ {timeLeft}s</span>
+        {streak >= 3 && <span style={{ color: '#f59e0b', fontWeight: '700' }}>🔥 {streak}x</span>}
       </div>
 
-      <div className="relative h-[250px] sm:h-[300px] md:h-[400px] bg-gradient-to-b from-sky-200 to-sky-400 rounded-xl sm:rounded-2xl md:rounded-3xl overflow-hidden cursor-pointer">
-        {bubbles.map((bubble) => (
+      {/* Timer Bar */}
+      <div style={{ width: '100%', height: '6px', background: theme.border, borderRadius: '3px', marginBottom: '12px' }}>
+        <div style={{
+          width: `${(timeLeft / 60) * 100}%`, height: '100%',
+          background: timeLeft <= 15 ? '#ef4444' : '#6366f1',
+          borderRadius: '3px', transition: 'width 1s',
+        }} />
+      </div>
+
+      {/* Question */}
+      <div style={{
+        background: '#6366f1', color: '#fff', borderRadius: '16px',
+        padding: '12px 24px', display: 'inline-block', marginBottom: '16px',
+        fontSize: '24px', fontWeight: '900', boxShadow: '0 4px 12px rgba(99,102,241,0.3)',
+      }}>
+        {q.text}
+      </div>
+
+      {/* Bubbles Area */}
+      <div style={{
+        position: 'relative', height: '320px',
+        background: 'linear-gradient(180deg, #e0e7ff 0%, #c7d2fe 100%)',
+        borderRadius: '20px', overflow: 'hidden',
+        cursor: 'pointer',
+      }}>
+        {bubbles.map(bubble => (
           <button
             key={bubble.id}
-            onClick={() => handleBubbleClick(bubble)}
-            className="absolute text-3xl sm:text-4xl md:text-5xl cursor-pointer hover:scale-110 transition transform animate-float"
+            onClick={() => handlePop(bubble)}
             style={{
+              position: 'absolute',
               left: `${bubble.x}%`,
               top: `${bubble.y}%`,
-              animationDelay: `${bubble.id * 0.1}s`
+              width: `${bubble.size}px`,
+              height: `${bubble.size}px`,
+              borderRadius: '50%',
+              border: '3px solid rgba(255,255,255,0.6)',
+              background: 'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), rgba(99,102,241,0.4))',
+              color: '#1e293b',
+              fontSize: '18px',
+              fontWeight: '900',
+              cursor: 'pointer',
+              animation: `float ${bubble.speed}s ease-in-out infinite`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
             }}
           >
-            🎈
-            <span className="absolute inset-0 flex items-center justify-center text-sm sm:text-base md:text-xl font-bold text-white drop-shadow-md">
-              {bubble.number}
-            </span>
+            {bubble.number}
           </button>
         ))}
       </div>
 
-      <div className="text-center mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600">
-        💡 Klik balon yang angkanya sama dengan jawaban soal!
-      </div>
+      {/* Message */}
+      {message && (
+        <div style={{
+          marginTop: '10px', padding: '10px', borderRadius: '10px',
+          background: message.includes('✅') ? '#d1fae5' : '#fee2e2',
+          color: message.includes('✅') ? '#065f46' : '#991b1b',
+          fontWeight: '600', fontSize: '15px',
+          animation: 'pop 0.3s ease-out',
+        }}>
+          {message}
+        </div>
+      )}
 
-      <div className="mt-3 sm:mt-4 bg-gray-200 rounded-full h-2 sm:h-3 md:h-4 overflow-hidden">
-        <div
-          className="bg-gradient-to-r from-green-500 to-teal-500 h-full transition-all duration-500"
-          style={{ width: `${(score / 50) * 100}%` }}
-        />
-      </div>
-
-      <div className="text-center mt-2 sm:mt-3 text-xs text-gray-400">
-        ✨ Setiap jawaban benar +10 poin, salah -5 poin ✨
-      </div>
+      <p style={{ marginTop: '10px', fontSize: '12px', color: theme.textMuted }}>
+        💡 Klik balon dengan jawaban yang benar!
+      </p>
     </div>
   );
 }

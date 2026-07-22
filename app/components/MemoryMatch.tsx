@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSoundEffect } from '@/hooks/useSoundEffect';
+import { useThemeStyles } from '@/hooks/useThemeStyles';
 
 interface Card {
   id: number;
@@ -13,17 +14,16 @@ interface Card {
 
 interface MemoryMatchProps {
   playerName: string;
-  onComplete: (stars: number, time: number) => void;
+  onComplete: (stars: number, extra?: any) => void; // ← FIX
 }
 
 const cardPairs = [
-  { id: 1, emoji: '🐶' }, { id: 2, emoji: '🐱' },
-  { id: 3, emoji: '🐭' }, { id: 4, emoji: '🐹' },
-  { id: 5, emoji: '🐰' }, { id: 6, emoji: '🦊' },
-  { id: 7, emoji: '🐻' }, { id: 8, emoji: '🐼' },
+  { emoji: '🐶' }, { emoji: '🐱' }, { emoji: '🐭' }, { emoji: '🐹' },
+  { emoji: '🐰' }, { emoji: '🦊' }, { emoji: '🐻' }, { emoji: '🐼' },
 ];
 
 export default function MemoryMatch({ playerName, onComplete }: MemoryMatchProps) {
+  const theme = useThemeStyles();
   const [cards, setCards] = useState<Card[]>([]);
   const [flippedIndexes, setFlippedIndexes] = useState<number[]>([]);
   const [moves, setMoves] = useState(0);
@@ -31,9 +31,7 @@ export default function MemoryMatch({ playerName, onComplete }: MemoryMatchProps
   const [isComplete, setIsComplete] = useState(false);
   const { playSound } = useSoundEffect();
 
-  useEffect(() => {
-    startNewGame();
-  }, []);
+  useEffect(() => { startNewGame(); }, []);
 
   const startNewGame = () => {
     const shuffled = [...cardPairs, ...cardPairs]
@@ -49,16 +47,10 @@ export default function MemoryMatch({ playerName, onComplete }: MemoryMatchProps
     setMoves(0);
     setIsComplete(false);
     setStartTime(Date.now());
-    playSound('click');
   };
 
   const handleCardClick = (index: number) => {
-    if (isComplete) return;
-    if (cards[index].isMatched) return;
-    if (cards[index].isFlipped) return;
-    if (flippedIndexes.length === 2) return;
-
-    playSound('click');
+    if (isComplete || cards[index].isMatched || cards[index].isFlipped || flippedIndexes.length === 2) return;
 
     const newCards = [...cards];
     newCards[index].isFlipped = true;
@@ -68,78 +60,102 @@ export default function MemoryMatch({ playerName, onComplete }: MemoryMatchProps
     setFlippedIndexes(newFlipped);
 
     if (newFlipped.length === 2) {
-      setMoves(moves + 1);
+      setMoves(m => m + 1);
       const [first, second] = newFlipped;
 
       if (cards[first].emoji === cards[second].emoji) {
-        playSound('match');
+        playSound('win');
         setTimeout(() => {
-          const matchedCards = [...cards];
+          const matchedCards = [...newCards];
           matchedCards[first].isMatched = true;
           matchedCards[second].isMatched = true;
-          matchedCards[first].isFlipped = true;
-          matchedCards[second].isFlipped = true;
           setCards(matchedCards);
           setFlippedIndexes([]);
 
-          const allMatched = matchedCards.every(card => card.isMatched);
-          if (allMatched && startTime) {
-            const timeSpent = (Date.now() - startTime) / 1000;
+          if (matchedCards.every(c => c.isMatched) && startTime) {
+            const timeSpent = Math.round((Date.now() - startTime) / 1000);
             let stars = 1;
             if (moves + 1 <= 10) stars = 3;
             else if (moves + 1 <= 15) stars = 2;
             setIsComplete(true);
-            playSound('win');
-            onComplete(stars, timeSpent);
+            onComplete(stars, { score: stars * 10, time: timeSpent, moves: moves + 1 });
           }
-        }, 500);
+        }, 400);
       } else {
-        playSound('wrong');
+        playSound('click');
         setTimeout(() => {
-          const resetCards = [...cards];
+          const resetCards = [...newCards];
           resetCards[first].isFlipped = false;
           resetCards[second].isFlipped = false;
           setCards(resetCards);
           setFlippedIndexes([]);
-        }, 1000);
+        }, 800);
       }
     }
   };
 
-  // app/components/MemoryMatch.tsx - Update responsive grid
-
   return (
-    <div className="p-3 sm:p-4 md:p-6">
-      <div className="flex justify-between mb-4 sm:mb-6">
-        <div className="text-sm sm:text-base md:text-xl">🎯 Langkah: {moves}</div>
-        <button
-          onClick={startNewGame}
-          className="bg-green-500 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm hover:bg-green-600 transition"
-        >
-          Game Baru 🔄
+    <div style={{ padding: '16px', maxWidth: '450px', margin: '0 auto', textAlign: 'center' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div style={{ fontSize: '15px', fontWeight: '700', color: theme.textSecondary }}>
+          🎯 {moves} langkah
+        </div>
+        <button onClick={startNewGame} style={{
+          padding: '8px 16px', borderRadius: '999px', border: 'none',
+          background: '#10b981', color: '#fff', fontWeight: '600', fontSize: '13px', cursor: 'pointer',
+        }}>
+          🔄 Baru
         </button>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 max-w-md mx-auto">
+      {/* Cards Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
         {cards.map((card, index) => (
           <button
             key={card.id}
             onClick={() => handleCardClick(index)}
-            className={`aspect-square text-2xl sm:text-3xl md:text-4xl rounded-xl sm:rounded-2xl transition-all transform ${card.isFlipped || card.isMatched
-                ? 'bg-yellow-300 rotate-0'
-                : 'bg-blue-500 rotate-180'
-              } shadow-lg hover:scale-105`}
+            style={{
+              aspectRatio: '1',
+              borderRadius: '14px',
+              border: 'none',
+              fontSize: card.isFlipped || card.isMatched ? '32px' : '24px',
+              fontWeight: '700',
+              cursor: (card.isMatched || card.isFlipped) ? 'default' : 'pointer',
+              background: card.isMatched 
+                ? '#d1fae5' 
+                : card.isFlipped 
+                  ? '#fef3c7' 
+                  : '#6366f1',
+              color: card.isFlipped || card.isMatched ? '#1e293b' : '#fff',
+              transform: card.isFlipped || card.isMatched ? 'rotateY(0)' : 'rotateY(180deg)',
+              transition: 'all 0.3s',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
-            <div className="flex items-center justify-center h-full">
-              {(card.isFlipped || card.isMatched) ? card.emoji : '❓'}
-            </div>
+            {card.isFlipped || card.isMatched ? card.emoji : '?'}
           </button>
         ))}
       </div>
 
-      <div className="text-center mt-4 sm:mt-6 text-xs sm:text-sm text-gray-500">
-        💡 Klik kartu untuk membuka, cari pasangan yang sama!
-      </div>
+      {/* Complete */}
+      {isComplete && (
+        <div style={{
+          marginTop: '16px', padding: '16px', borderRadius: '16px',
+          background: '#d1fae5', color: '#065f46',
+          fontWeight: '700', fontSize: '18px',
+          animation: 'pop 0.3s ease-out',
+        }}>
+          🎉 Selesai! {moves} langkah
+        </div>
+      )}
+
+      <p style={{ marginTop: '12px', fontSize: '12px', color: theme.textMuted }}>
+        💡 Cari pasangan emoji yang sama!
+      </p>
     </div>
   );
 }

@@ -1,479 +1,189 @@
+// app/components/games/MathAdventure.tsx
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useThemeStyles } from '@/hooks/useThemeStyles';
 
 interface MathAdventureProps {
   onComplete: (stars: number, extra?: any) => void;
 }
 
 interface Obstacle {
-  id: number;
-  x: number;
-  question: string;
-  answer: number;
-  options: number[];
-  passed: boolean;
+  id: number; x: number; question: string; answer: number; options: number[]; passed: boolean;
 }
 
-interface PowerUp {
-  id: number;
-  x: number;
-  type: 'shield' | 'speed' | 'double';
-  collected: boolean;
-}
-
-type GameState = 'ready' | 'playing' | 'answering' | 'complete';
+type GameState = 'ready' | 'playing' | 'complete';
 
 const CHARACTERS = ['🦸', '🦹', '🧙', '🦊', '🐱', '🐶', '🦄', '🤖'];
-const POWER_UPS = {
-  shield: { emoji: '🛡️', name: 'Perisai', color: 'bg-blue-400' },
-  speed: { emoji: '⚡', name: 'Kecepatan', color: 'bg-yellow-400' },
-  double: { emoji: '✨', name: 'Skor 2x', color: 'bg-purple-400' },
-};
 
 export default function MathAdventure({ onComplete }: MathAdventureProps) {
+  const theme = useThemeStyles();
   const [gameState, setGameState] = useState<GameState>('ready');
   const [character, setCharacter] = useState(CHARACTERS[0]);
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
   const [level, setLevel] = useState(1);
   const [obstacles, setObstacles] = useState<Obstacle[]>([]);
-  const [powerUps, setPowerUps] = useState<PowerUp[]>([]);
-  const [currentObstacle, setCurrentObstacle] = useState<Obstacle | null>(null);
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [isCorrect, setIsCorrect] = useState(false);
-  const [collectedPowerUps, setCollectedPowerUps] = useState<string[]>([]);
+  const [currentObs, setCurrentObs] = useState<Obstacle | null>(null);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [feedback, setFeedback] = useState(false);
+  const [correct, setCorrect] = useState(false);
   const [combo, setCombo] = useState(0);
   const [timeLeft, setTimeLeft] = useState(30);
   const [characterY, setCharacterY] = useState(50);
-  
+
   const gameLoopRef = useRef<NodeJS.Timeout | null>(null);
   const timeRef = useRef<NodeJS.Timeout | null>(null);
 
-  const generateQuestion = useCallback((level: number) => {
-    const operations = level === 1 ? ['+', '-'] : 
-                      level === 2 ? ['+', '-', '×'] : 
-                      ['+', '-', '×', '÷'];
-    
-    const operation = operations[Math.floor(Math.random() * operations.length)];
-    let num1: number, num2: number, answer: number, question: string;
-    
-    const maxNum = level === 1 ? 20 : level === 2 ? 50 : 100;
-    
-    switch (operation) {
-      case '+':
-        num1 = Math.floor(Math.random() * maxNum) + 1;
-        num2 = Math.floor(Math.random() * maxNum) + 1;
-        answer = num1 + num2;
-        question = `${num1} + ${num2} = ?`;
-        break;
-      case '-':
-        num1 = Math.floor(Math.random() * maxNum) + Math.floor(maxNum/2);
-        num2 = Math.floor(Math.random() * num1) + 1;
-        answer = num1 - num2;
-        question = `${num1} - ${num2} = ?`;
-        break;
-      case '×':
-        num1 = Math.floor(Math.random() * (level + 4)) + 1;
-        num2 = Math.floor(Math.random() * (level + 4)) + 1;
-        answer = num1 * num2;
-        question = `${num1} × ${num2} = ?`;
-        break;
-      case '÷':
-        num2 = Math.floor(Math.random() * 9) + 1;
-        answer = Math.floor(Math.random() * 9) + 1;
-        num1 = num2 * answer;
-        question = `${num1} ÷ ${num2} = ?`;
-        break;
-      default:
-        answer = 0;
-        question = '';
+  const generateQuestion = useCallback((lvl: number) => {
+    const ops = lvl === 1 ? ['+', '-'] : lvl === 2 ? ['+', '-', '×'] : ['+', '-', '×', '÷'];
+    const op = ops[Math.floor(Math.random() * ops.length)];
+    let a: number, b: number, ans: number, q: string;
+    const max = lvl === 1 ? 20 : lvl === 2 ? 50 : 100;
+    switch (op) {
+      case '+': a = Math.floor(Math.random() * max) + 1; b = Math.floor(Math.random() * max) + 1; ans = a + b; q = `${a}+${b}=?`; break;
+      case '-': a = Math.floor(Math.random() * max) + Math.floor(max/2); b = Math.floor(Math.random() * a) + 1; ans = a - b; q = `${a}-${b}=?`; break;
+      case '×': a = Math.floor(Math.random() * (lvl + 4)) + 1; b = Math.floor(Math.random() * (lvl + 4)) + 1; ans = a * b; q = `${a}×${b}=?`; break;
+      case '÷': b = Math.floor(Math.random() * 9) + 1; ans = Math.floor(Math.random() * 9) + 1; a = b * ans; q = `${a}÷${b}=?`; break;
+      default: a = 0; b = 0; ans = 0; q = '';
     }
-    
-    const options = new Set<number>([answer]);
-    while (options.size < 4) {
-      const offset = Math.floor(Math.random() * Math.max(10, answer/2)) + 1;
-      options.add(Math.random() > 0.5 ? answer + offset : Math.max(0, answer - offset));
-    }
-    
-    return {
-      question,
-      answer,
-      options: Array.from(options).sort(() => Math.random() - 0.5),
-    };
+    const opts = new Set([ans]);
+    while (opts.size < 4) { const off = Math.floor(Math.random() * 10) + 1; opts.add(Math.random() > 0.5 ? ans + off : Math.max(0, ans - off)); }
+    return { question: q, answer: ans, options: Array.from(opts).sort(() => Math.random() - 0.5) };
   }, []);
 
   const endGame = useCallback(() => {
     setGameState('complete');
     if (timeRef.current) clearInterval(timeRef.current);
     if (gameLoopRef.current) clearInterval(gameLoopRef.current);
-    
     const stars = score >= 200 ? 3 : score >= 100 ? 2 : 1;
-    onComplete(stars, { score, level });
-  }, [score, level, onComplete]);
+    onComplete(stars, { score, level, combo });
+  }, [score, level, combo, onComplete]);
 
   const startGame = useCallback(() => {
-    setGameState('playing');
-    setScore(0);
-    setLives(3);
-    setLevel(1);
-    setCombo(0);
-    setTimeLeft(30);
-    setObstacles([]);
-    setPowerUps([]);
-    setCollectedPowerUps([]);
-    
-    const initialObstacles: Obstacle[] = Array.from({ length: 5 }, (_, i) => ({
-      id: i,
-      x: 100 + i * 150,
-      ...generateQuestion(1),
-      passed: false,
-    }));
-    setObstacles(initialObstacles);
-    
-    const initialPowerUps: PowerUp[] = [
-      { id: 1, x: 250, type: 'shield', collected: false },
-      { id: 2, x: 500, type: 'double', collected: false },
-      { id: 3, x: 700, type: 'speed', collected: false },
-    ];
-    setPowerUps(initialPowerUps);
-    
+    setGameState('playing'); setScore(0); setLives(3); setLevel(1); setCombo(0); setTimeLeft(30);
+    const obs: Obstacle[] = Array.from({ length: 5 }, (_, i) => ({ id: i, x: 100 + i * 150, ...generateQuestion(1), passed: false }));
+    setObstacles(obs);
     if (timeRef.current) clearInterval(timeRef.current);
     timeRef.current = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          setLives(l => {
-            const newLives = l - 1;
-            if (newLives <= 0) {
-              setTimeout(() => endGame(), 100);
-              return 0;
-            }
-            return newLives;
-          });
-          return 30;
-        }
-        return prev - 1;
+      setTimeLeft(p => {
+        if (p <= 1) { setLives(l => { const nl = l - 1; if (nl <= 0) { setTimeout(() => endGame(), 100); return 0; } return nl; }); return 30; }
+        return p - 1;
       });
     }, 1000);
   }, [generateQuestion, endGame]);
 
-  const handleAnswer = useCallback((answer: number) => {
-    if (!currentObstacle) return;
-    
-    setSelectedAnswer(answer);
-    const correct = answer === currentObstacle.answer;
-    setIsCorrect(correct);
-    setShowFeedback(true);
-    
-    if (correct) {
-      const bonusPoints = collectedPowerUps.includes('double') ? 20 : 10;
-      const comboBonus = combo * 5;
-      setScore(prev => prev + bonusPoints + comboBonus);
-      setCombo(prev => prev + 1);
-      
-      setObstacles(prev => prev.map(o => 
-        o.id === currentObstacle.id ? { ...o, passed: true } : o
-      ));
-      
-      powerUps.forEach(pu => {
-        if (Math.abs(pu.x - currentObstacle.x) < 50 && !pu.collected) {
-          setPowerUps(prev => prev.map(p => 
-            p.id === pu.id ? { ...p, collected: true } : p
-          ));
-          setCollectedPowerUps(prev => [...prev, pu.type]);
-          setTimeout(() => {
-            setCollectedPowerUps(prev => prev.filter(t => t !== pu.type));
-          }, 5000);
-        }
-      });
-      
-      const passedCount = obstacles.filter(o => o.passed).length + 1;
-      if (passedCount >= 4) {
-        setLevel(prev => {
-          const newLevel = prev + 1;
-          const newObstacles: Obstacle[] = Array.from({ length: 5 }, (_, i) => ({
-            id: Date.now() + i,
-            x: 800 + i * 150,
-            ...generateQuestion(newLevel),
-            passed: false,
-          }));
-          setObstacles(prev => [...prev, ...newObstacles]);
-          return newLevel;
+  const handleAnswer = useCallback((ans: number) => {
+    if (!currentObs) return;
+    setSelected(ans);
+    const ok = ans === currentObs.answer;
+    setCorrect(ok); setFeedback(true);
+    if (ok) {
+      setScore(s => s + 10 + combo * 5); setCombo(c => c + 1);
+      setObstacles(p => p.map(o => o.id === currentObs.id ? { ...o, passed: true } : o));
+      if (obstacles.filter(o => o.passed).length + 1 >= 4) {
+        setLevel(l => {
+          const nl = l + 1;
+          const newObs: Obstacle[] = Array.from({ length: 5 }, (_, i) => ({ id: Date.now() + i, x: 800 + i * 150, ...generateQuestion(nl), passed: false }));
+          setObstacles(p => [...p, ...newObs]);
+          return nl;
         });
       }
-    } else {
-      setCombo(0);
-      if (!collectedPowerUps.includes('shield')) {
-        setLives(prev => {
-          const newLives = prev - 1;
-          if (newLives <= 0) {
-            setTimeout(() => endGame(), 1500);
-            return 0;
-          }
-          return newLives;
-        });
-      }
-    }
-    
-    setTimeout(() => {
-      setCurrentObstacle(null);
-      setSelectedAnswer(null);
-      setShowFeedback(false);
-    }, 1500);
-  }, [currentObstacle, combo, collectedPowerUps, powerUps, obstacles, generateQuestion, endGame]);
+    } else { setCombo(0); setLives(l => { const nl = l - 1; if (nl <= 0) { setTimeout(() => endGame(), 1500); return 0; } return nl; }); }
+    setTimeout(() => { setCurrentObs(null); setSelected(null); setFeedback(false); }, 1500);
+  }, [currentObs, combo, obstacles, generateQuestion, endGame]);
 
-  const jump = useCallback(() => {
-    setCharacterY(prev => {
-      if (prev > 20) return prev - 30;
-      return prev;
-    });
-    setTimeout(() => {
-      setCharacterY(50);
-    }, 300);
-  }, []);
+  const jump = useCallback(() => { setCharacterY(p => (p > 20 ? p - 30 : p)); setTimeout(() => setCharacterY(50), 300); }, []);
 
   useEffect(() => {
     if (gameState === 'playing') {
-      gameLoopRef.current = setInterval(() => {
-        setObstacles(prev => prev.map(o => ({
-          ...o,
-          x: o.x - 2,
-        })));
-        
-        setPowerUps(prev => prev.map(p => ({
-          ...p,
-          x: p.x - 2,
-        })));
-      }, 50);
-      
-      return () => {
-        if (gameLoopRef.current) clearInterval(gameLoopRef.current);
-      };
+      gameLoopRef.current = setInterval(() => setObstacles(p => p.map(o => ({ ...o, x: o.x - 2 }))), 50);
+      return () => { if (gameLoopRef.current) clearInterval(gameLoopRef.current); };
     }
   }, [gameState]);
 
   useEffect(() => {
     if (gameState === 'playing') {
-      const checkCollision = setInterval(() => {
-        obstacles.forEach(obstacle => {
-          if (!obstacle.passed && obstacle.x < 30 && obstacle.x > 10 && !currentObstacle) {
-            setCurrentObstacle(obstacle);
-          }
-        });
+      const check = setInterval(() => {
+        obstacles.forEach(o => { if (!o.passed && o.x < 30 && o.x > 10 && !currentObs) setCurrentObs(o); });
       }, 100);
-      
-      return () => clearInterval(checkCollision);
+      return () => clearInterval(check);
     }
-  }, [gameState, obstacles, currentObstacle]);
+  }, [gameState, obstacles, currentObs]);
 
-  useEffect(() => {
-    return () => {
-      if (timeRef.current) clearInterval(timeRef.current);
-      if (gameLoopRef.current) clearInterval(gameLoopRef.current);
-    };
-  }, []);
+  useEffect(() => { return () => { if (timeRef.current) clearInterval(timeRef.current); if (gameLoopRef.current) clearInterval(gameLoopRef.current); }; }, []);
 
-  if (gameState === 'ready') {
-    return (
-      <div className="text-center py-8">
-        <div className="text-6xl mb-4 animate-bounce">🎮</div>
-        <h2 className="text-3xl font-bold mb-2 text-purple-600">Math Adventure!</h2>
-        <p className="text-gray-600 mb-4">Petualangan Seru dengan Matematika!</p>
-        
-        <div className="bg-purple-50 rounded-2xl p-6 mb-6">
-          <p className="font-bold mb-2">🎯 Cara Bermain:</p>
-          <ul className="text-sm text-left space-y-2">
-            <li>🏃‍♂️ Karaktermu berlari otomatis</li>
-            <li>🧮 Jawab soal matematika untuk melewati rintangan</li>
-            <li>🛡️ Kumpulkan power-ups untuk bantuan</li>
-            <li>⚡ Jawab cepat dapat kombo bonus!</li>
-            <li>❤️ Kamu punya 3 nyawa</li>
-          </ul>
-        </div>
-        
-        <div className="flex justify-center gap-4 mb-6">
-          {CHARACTERS.slice(0, 4).map((char, idx) => (
-            <button
-              key={idx}
-              onClick={() => setCharacter(char)}
-              className={`text-4xl p-3 rounded-xl transition-all ${
-                character === char ? 'bg-purple-200 scale-110 ring-2 ring-purple-400' : 'bg-gray-100 hover:bg-gray-200'
-              }`}
-            >
-              {char}
-            </button>
-          ))}
-        </div>
-        
-        <button
-          onClick={startGame}
-          className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-3 rounded-full font-bold text-lg hover:scale-105 transition"
-        >
-          🚀 Mulai Petualangan!
-        </button>
-      </div>
-    );
-  }
-
-  if (gameState === 'complete') {
-    return (
-      <div className="text-center py-8">
-        <div className="text-6xl mb-4">🏆</div>
-        <h2 className="text-2xl font-bold mb-2 text-purple-600">Petualangan Selesai!</h2>
-        <p className="text-lg mb-2">Skor: {score}</p>
-        <p className="text-gray-600 mb-2">Level Dicapai: {level}</p>
-        <div className="flex justify-center gap-2 text-4xl">
-          {score >= 200 ? '⭐⭐⭐' : score >= 100 ? '⭐⭐' : '⭐'}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="relative h-[500px] bg-gradient-to-b from-blue-200 to-green-200 rounded-2xl overflow-hidden">
-      {/* Sky */}
-      <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-blue-300 to-blue-100">
-        <div className="absolute top-10 left-10 text-4xl opacity-70">☁️</div>
-        <div className="absolute top-20 right-20 text-3xl opacity-70">☁️</div>
-        <div className="absolute top-5 left-1/2 text-5xl opacity-70">☁️</div>
-      </div>
-      
-      {/* Ground */}
-      <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-b from-green-300 to-green-600">
-        <div className="absolute top-0 left-0 right-0 h-2 bg-green-400"></div>
-        {Array.from({ length: 20 }, (_, i) => (
-          <div key={i} className="absolute bottom-20 text-2xl" style={{ left: `${i * 5}%` }}>
-            🌿
-          </div>
+  if (gameState === 'ready') return (
+    <div style={{ maxWidth: '500px', margin: '0 auto', padding: '24px', textAlign: 'center', background: theme.bg, minHeight: '400px' }}>
+      <div style={{ fontSize: '60px', marginBottom: '8px' }}>🎮</div>
+      <h2 style={{ fontSize: '28px', fontWeight: '800', color: theme.heading }}>Math Adventure!</h2>
+      <p style={{ fontSize: '14px', color: theme.textSecondary, marginBottom: '16px' }}>Petualangan Seru dengan Matematika!</p>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '16px' }}>
+        {CHARACTERS.slice(0, 4).map((c, i) => (
+          <button key={i} onClick={() => setCharacter(c)} style={{ fontSize: '36px', padding: '8px', borderRadius: '12px', border: character === c ? '3px solid #7c3aed' : '3px solid transparent', background: character === c ? '#ede9fe' : theme.bgHover, cursor: 'pointer' }}>{c}</button>
         ))}
       </div>
-      
+      <button onClick={startGame} style={{ padding: '14px 32px', borderRadius: '999px', border: 'none', background: '#7c3aed', color: '#fff', fontWeight: '700', fontSize: '16px', cursor: 'pointer' }}>🚀 Mulai Petualangan!</button>
+    </div>
+  );
+
+  if (gameState === 'complete') return (
+    <div style={{ maxWidth: '500px', margin: '0 auto', padding: '24px', textAlign: 'center', background: theme.bg, minHeight: '400px' }}>
+      <div style={{ fontSize: '60px' }}>🏆</div>
+      <h2 style={{ fontSize: '24px', fontWeight: '800', color: theme.heading }}>Petualangan Selesai!</h2>
+      <p style={{ color: theme.textSecondary }}>Skor: {score} | Level: {level} | Kombo: {combo}x</p>
+      <div style={{ fontSize: '40px' }}>{score >= 200 ? '⭐⭐⭐' : score >= 100 ? '⭐⭐' : '⭐'}</div>
+    </div>
+  );
+
+  return (
+    <div style={{ position: 'relative', height: '450px', borderRadius: '16px', overflow: 'hidden', background: 'linear-gradient(180deg, #87CEEB 0%, #90EE90 50%, #8B7355 100%)' }}>
+      {/* Clouds */}
+      <div style={{ position: 'absolute', top: '10%', left: '10%', fontSize: '30px', opacity: 0.7 }}>☁️</div>
+      <div style={{ position: 'absolute', top: '5%', right: '15%', fontSize: '25px', opacity: 0.7 }}>☁️</div>
+
       {/* Character */}
-      <div 
-        className="absolute transition-all duration-300"
-        style={{ 
-          left: '20%', 
-          top: `${characterY}%`,
-          transform: 'translateY(-50%)'
-        }}
-      >
-        <div className="text-5xl animate-bounce">{character}</div>
-        {collectedPowerUps.includes('shield') && (
-          <div className="absolute -top-2 -left-2 text-2xl">🛡️</div>
-        )}
-        {collectedPowerUps.includes('speed') && (
-          <div className="absolute -top-2 -right-2 text-2xl">⚡</div>
-        )}
-        {collectedPowerUps.includes('double') && (
-          <div className="absolute -bottom-2 left-1/2 text-2xl">✨</div>
-        )}
-      </div>
-      
+      <div style={{ position: 'absolute', left: '20%', top: `${characterY}%`, transition: 'top 0.3s', fontSize: '40px' }}>{character}</div>
+
       {/* Obstacles */}
-      {obstacles.filter(o => !o.passed).map(obstacle => (
-        <div
-          key={obstacle.id}
-          className="absolute top-[55%] transition-all duration-50"
-          style={{ left: `${obstacle.x}px` }}
-        >
-          <div className="text-4xl animate-pulse">🧱</div>
-          {currentObstacle?.id === obstacle.id && (
-            <div className="absolute -top-20 left-1/2 transform -translate-x-1/2 bg-white rounded-xl p-2 shadow-lg text-sm font-bold min-w-[120px]">
-              {obstacle.question}
-            </div>
-          )}
+      {obstacles.filter(o => !o.passed).map(o => (
+        <div key={o.id} style={{ position: 'absolute', top: '55%', left: `${o.x}px`, transition: 'left 0.05s' }}>
+          <div style={{ fontSize: '30px' }}>🧱</div>
+          {currentObs?.id === o.id && <div style={{ position: 'absolute', top: '-30px', left: '50%', transform: 'translateX(-50%)', background: '#fff', borderRadius: '8px', padding: '4px 8px', fontSize: '12px', fontWeight: '700', whiteSpace: 'nowrap' }}>{o.question}</div>}
         </div>
       ))}
-      
-      {/* Power-ups */}
-      {powerUps.filter(p => !p.collected).map(powerUp => (
-        <div
-          key={powerUp.id}
-          className="absolute top-[45%] transition-all duration-50"
-          style={{ left: `${powerUp.x}px` }}
-        >
-          <div className="text-3xl animate-bounce">
-            {POWER_UPS[powerUp.type].emoji}
-          </div>
-        </div>
-      ))}
-      
+
       {/* HUD */}
-      <div className="absolute top-4 left-4 right-4 flex justify-between items-center">
-        <div className="flex items-center gap-2 bg-white/90 rounded-full px-4 py-2">
-          <span className="text-xl">❤️</span>
-          <span className="font-bold">{lives}</span>
-        </div>
-        <div className="bg-white/90 rounded-full px-4 py-2 font-bold">
-          Level {level}
-        </div>
-        <div className="flex items-center gap-2 bg-white/90 rounded-full px-4 py-2">
-          <span className="text-xl">⭐</span>
-          <span className="font-bold">{score}</span>
-        </div>
-        <div className={`bg-white/90 rounded-full px-4 py-2 font-bold ${
-          timeLeft <= 10 ? 'text-red-500 animate-pulse' : ''
-        }`}>
-          ⏱️ {timeLeft}s
-        </div>
+      <div style={{ position: 'absolute', top: '8px', left: '8px', right: '8px', display: 'flex', justifyContent: 'space-between' }}>
+        <span style={{ background: 'rgba(255,255,255,0.8)', borderRadius: '20px', padding: '4px 10px', fontSize: '13px', fontWeight: '700' }}>❤️ {lives}</span>
+        <span style={{ background: 'rgba(255,255,255,0.8)', borderRadius: '20px', padding: '4px 10px', fontSize: '13px', fontWeight: '700' }}>Lv.{level}</span>
+        <span style={{ background: 'rgba(255,255,255,0.8)', borderRadius: '20px', padding: '4px 10px', fontSize: '13px', fontWeight: '700' }}>⭐ {score}</span>
+        <span style={{ background: timeLeft <= 10 ? '#fee2e2' : 'rgba(255,255,255,0.8)', borderRadius: '20px', padding: '4px 10px', fontSize: '13px', fontWeight: '700', color: timeLeft <= 10 ? '#ef4444' : '#1e293b' }}>⏱ {timeLeft}s</span>
       </div>
-      
-      {/* Combo Display */}
-      {combo >= 3 && (
-        <div className="absolute top-20 left-1/2 transform -translate-x-1/2">
-          <div className="bg-yellow-400 text-white px-4 py-2 rounded-full font-bold animate-bounce text-lg">
-            🔥 Combo x{combo}!
-          </div>
-        </div>
-      )}
-      
+      {combo >= 3 && <div style={{ position: 'absolute', top: '40px', left: '50%', transform: 'translateX(-50%)', background: '#fbbf24', borderRadius: '20px', padding: '4px 12px', fontWeight: '700', fontSize: '13px', color: '#1e293b' }}>🔥 {combo}x</div>}
+
       {/* Answer Modal */}
-      {currentObstacle && !showFeedback && (
-        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 bg-white/95 rounded-2xl p-4 shadow-2xl w-[90%] max-w-md">
-          <p className="text-center font-bold text-lg mb-3">{currentObstacle.question}</p>
-          <div className="grid grid-cols-2 gap-2">
-            {currentObstacle.options.map((option, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleAnswer(option)}
-                className="bg-gradient-to-r from-purple-400 to-pink-400 text-white p-3 rounded-xl font-bold hover:scale-105 transition"
-              >
-                {option}
-              </button>
+      {currentObs && !feedback && (
+        <div style={{ position: 'absolute', bottom: '16px', left: '50%', transform: 'translateX(-50%)', background: '#fff', borderRadius: '16px', padding: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.2)', width: '90%', maxWidth: '320px', textAlign: 'center' }}>
+          <p style={{ fontWeight: '700', marginBottom: '8px' }}>{currentObs.question}</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+            {currentObs.options.map((opt, i) => (
+              <button key={i} onClick={() => handleAnswer(opt)} style={{ padding: '10px', borderRadius: '10px', border: 'none', background: '#7c3aed', color: '#fff', fontWeight: '700', fontSize: '14px', cursor: 'pointer' }}>{opt}</button>
             ))}
           </div>
         </div>
       )}
-      
+
       {/* Feedback */}
-      {showFeedback && (
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
-          <div className="text-5xl mb-2">
-            {isCorrect ? '🎉' : '💥'}
-          </div>
-          <div className={`text-xl font-bold ${
-            isCorrect ? 'text-green-600' : 'text-red-600'
-          }`}>
-            {isCorrect ? `+${collectedPowerUps.includes('double') ? '20' : '10'} Poin!` : 'Salah!'}
-          </div>
-          {isCorrect && combo >= 2 && (
-            <div className="text-yellow-600 font-bold">
-              Kombo Bonus: +{combo * 5}!
-            </div>
-          )}
+      {feedback && (
+        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
+          <div style={{ fontSize: '40px' }}>{correct ? '🎉' : '💥'}</div>
+          <p style={{ fontWeight: '700', color: correct ? '#10b981' : '#ef4444' }}>{correct ? `+${10 + combo * 5} Poin!` : 'Salah!'}</p>
         </div>
       )}
-      
-      {/* Mobile Controls */}
-      <div className="absolute bottom-4 right-4">
-        <button
-          onClick={jump}
-          className="bg-white/90 rounded-full w-16 h-16 flex items-center justify-center text-2xl shadow-lg hover:scale-110 transition active:scale-95"
-        >
-          ⬆️
-        </button>
-      </div>
+
+      {/* Jump Button */}
+      <button onClick={jump} style={{ position: 'absolute', bottom: '12px', right: '12px', width: '48px', height: '48px', borderRadius: '50%', border: 'none', background: 'rgba(255,255,255,0.8)', fontSize: '22px', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>⬆️</button>
     </div>
   );
 }

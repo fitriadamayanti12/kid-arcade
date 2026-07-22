@@ -1,90 +1,176 @@
+// app/components/layout/GameSelector.tsx
 'use client';
 
 import { SoundType } from '@/hooks/useSoundEffect';
+import { useThemeStyles } from '@/hooks/useThemeStyles';
 
-type GameType = 'puzzle' | 'memory' | 'timer' | 'bubble' | 'wordmatch' | 'fillblanks' | 'aigame' | 'countobjects' | 'pizzafraction' | 'mathadventure' | 'mathdetective' | 'numberninja' | 'mathscrabble' | 'mathcraft' | 'mathracer' | 'dicequest' | 'mathtower' | 'multblitz' | 'geoquest' | 'magictable' | 'bangunyuk';
+type GameType = string;
 
 interface GameSelectorProps {
   selectedGame: GameType;
   onSelectGame: (game: GameType) => void;
   playSound: (type: SoundType) => void;
+  selectedGrade: string;
 }
 
-const games = [
-  // Kelas 1-3: Basic Math
-  { id: 'puzzle' as const, label: '🧩 Puzzle', color: 'from-orange-500 to-red-500', grade: '1-3', category: 'Basic' },
-  { id: 'countobjects' as const, label: '🔵 Hitung', color: 'from-blue-500 to-cyan-500', grade: '3', category: 'Basic' },
-  { id: 'mathadventure' as const, label: '🏃 Adventure', color: 'from-purple-500 to-pink-500', grade: '3', category: 'Basic' },
-  { id: 'numberninja' as const, label: '🥷 Ninja', color: 'from-gray-600 to-gray-800', grade: '3', category: 'Basic' },
-  { id: 'mathcraft' as const, label: '🏗️ Craft', color: 'from-amber-500 to-yellow-600', grade: '3', category: 'Basic' },
-  { id: 'dicequest' as const, label: '🎲 DiceQuest', color: 'from-amber-500 to-red-500', grade: '3', category: 'Basic' },
-  { id: 'multblitz' as const, label: '⚡ Blitz', color: 'from-yellow-500 to-red-500', grade: '3', category: 'Basic' },
-  { id: 'magictable' as const, label: '🌟 Tabel Ajaib', color: 'from-yellow-400 to-amber-500', grade: '3', category: 'Basic' },
-  
-  // Kelas 4-6: Intermediate Math
-  { id: 'memory' as const, label: '🃏 Memory', color: 'from-purple-500 to-pink-500', grade: '4-6', category: 'Intermediate' },
-  { id: 'timer' as const, label: '⏱️ Timer', color: 'from-red-500 to-orange-500', grade: '4-6', category: 'Intermediate' },
-  { id: 'bubble' as const, label: '🎈 Math', color: 'from-green-500 to-teal-500', grade: '4-6', category: 'Intermediate' },
-  { id: 'pizzafraction' as const, label: '🍕 Pecahan', color: 'from-yellow-500 to-orange-500', grade: '6', category: 'Intermediate' },
-  { id: 'mathdetective' as const, label: '🔍 Detektif', color: 'from-indigo-500 to-purple-500', grade: '6', category: 'Intermediate' },
-  { id: 'mathscrabble' as const, label: '🔤 Scrabble', color: 'from-teal-600 to-emerald-600', grade: '6', category: 'Intermediate' },
-  { id: 'mathracer' as const, label: '🏎️ Racer', color: 'from-red-600 to-orange-600', grade: '6', category: 'Intermediate' },
-  { id: 'mathtower' as const, label: '🏰 Tower', color: 'from-stone-500 to-stone-700', grade: '6', category: 'Intermediate' },
-  { id: 'geoquest' as const, label: '📐 GeoQuest', color: 'from-violet-500 to-purple-500', grade: '6', category: 'Intermediate' },
-  { id: 'bangunyuk' as const, label: '🏠 Bangun Yuk', color: 'from-emerald-500 to-green-600', grade: '6', category: 'Intermediate' },
-  
-  // Language & Logic
-  { id: 'wordmatch' as const, label: '📖 Word', color: 'from-teal-500 to-cyan-500', grade: 'All', category: 'Language' },
-  { id: 'fillblanks' as const, label: '✏️ Blanks', color: 'from-teal-500 to-cyan-500', grade: 'All', category: 'Language' },
-  
-  // Advanced
-  { id: 'aigame' as const, label: '🤖 AI Game', color: 'from-purple-500 to-pink-500', grade: 'All', category: 'Advanced' },
+interface GameItem {
+  id: string;
+  label: string;
+  color: string;
+  textColor: string;
+  grade: string;
+}
+
+const games: GameItem[] = [
+  // ========== PAUD ==========
+  { id: 'kenalangka', label: '🌟 Kenal Angka', color: '#fef3c7', textColor: '#92400e', grade: 'paud' },
+  { id: 'hitunghewan', label: '🐮 Hitung Hewan', color: '#d1fae5', textColor: '#065f46', grade: 'paud' },
+  { id: 'bentukwarna', label: '🔺 Bentuk Warna', color: '#fce7f3', textColor: '#9d174d', grade: 'paud' },
+  { id: 'besarkecil', label: '🐘 Besar Kecil', color: '#ede9fe', textColor: '#5b21b6', grade: 'paud' },
+  { id: 'cocokangka', label: '🎯 Cocok Angka', color: '#e0f2fe', textColor: '#075985', grade: 'paud' },
+
+  // ========== TK ==========
+  { id: 'tambahsederhana', label: '➕ Tambah Asyik', color: '#d1fae5', textColor: '#065f46', grade: 'tk' },
+  { id: 'kurangseru', label: '➖ Kurang Seru', color: '#fee2e2', textColor: '#991b1b', grade: 'tk' },
+  { id: 'urutangka', label: '🔢 Urut Angka', color: '#ede9fe', textColor: '#5b21b6', grade: 'tk' },
+  { id: 'hitungbuah', label: '🍎 Hitung Buah', color: '#fef3c7', textColor: '#92400e', grade: 'tk' },
+  { id: 'pologambar', label: '🧩 Pola Gambar', color: '#fce7f3', textColor: '#9d174d', grade: 'tk' },
+  { id: 'countobjects', label: '🔵 Hitung Benda', color: '#dbeafe', textColor: '#1e40af', grade: 'tk' },
+
+  // ========== Kelas 1 ==========
+  { id: 'tambahasyik', label: '➕ Tambah Cepat', color: '#dbeafe', textColor: '#1e40af', grade: '1' },
+  { id: 'kurangseru1', label: '➖ Kurang Cepat', color: '#fee2e2', textColor: '#991b1b', grade: '1' },
+  { id: 'jamwaktu', label: '🕐 Jam & Waktu', color: '#cffafe', textColor: '#155e75', grade: '1' },
+  { id: 'bangundatar', label: '🔺 Bangun Datar', color: '#ede9fe', textColor: '#5b21b6', grade: '1' },
+  { id: 'uangsaku', label: '💵 Uang Saku', color: '#d1fae5', textColor: '#065f46', grade: '1' },
+  { id: 'polabilangan', label: '🔢 Pola Bilangan', color: '#ede9fe', textColor: '#5b21b6', grade: '1' },
+  { id: 'panjangpendek', label: '📏 Panjang Pendek', color: '#ffedd5', textColor: '#9a3412', grade: '1' },
+  { id: 'mathquiz1', label: '🎯 Kuis Kelas 1', color: '#e0e7ff', textColor: '#3730a3', grade: '1' },
+  { id: 'puzzle', label: '🧩 Puzzle Math', color: '#ffedd5', textColor: '#9a3412', grade: '1' },
+  { id: 'wordmatch', label: '📖 Word Match', color: '#ccfbf1', textColor: '#134e4a', grade: '1' },
+
+  // ========== Kelas 2 ==========
+  { id: 'tambahcepat', label: '➕ Tambah Cepat', color: '#dbeafe', textColor: '#1e40af', grade: '2' },
+  { id: 'kurangcepat', label: '➖ Kurang Cepat', color: '#fee2e2', textColor: '#991b1b', grade: '2' },
+  { id: 'kaliawal', label: '✖️ Perkalian Awal', color: '#ede9fe', textColor: '#5b21b6', grade: '2' },
+  { id: 'bagiawal', label: '➗ Pembagian Awal', color: '#d1fae5', textColor: '#065f46', grade: '2' },
+  { id: 'mathadventure', label: '🏃 Adventure', color: '#ede9fe', textColor: '#5b21b6', grade: '2' },
+  { id: 'numberninja', label: '🥷 Ninja Math', color: '#e5e7eb', textColor: '#374151', grade: '2' },
+  { id: 'magictable', label: '🌟 Tabel Ajaib', color: '#fef3c7', textColor: '#92400e', grade: '2' },
+  { id: 'fillblanks', label: '✏️ Fill Blanks', color: '#ccfbf1', textColor: '#134e4a', grade: '2' },
+
+  // ========== Kelas 3 ==========
+  { id: 'kalimaster', label: '✖️ Kali Master', color: '#ede9fe', textColor: '#5b21b6', grade: '3' },
+  { id: 'bagimaster', label: '➗ Bagi Master', color: '#d1fae5', textColor: '#065f46', grade: '3' },
+  { id: 'pecahanvisual', label: '🍕 Pecahan Visual', color: '#fef3c7', textColor: '#92400e', grade: '3' },
+  { id: 'geometrifun', label: '📐 Geometri Fun', color: '#dbeafe', textColor: '#1e40af', grade: '3' },
+  { id: 'mathcraft', label: '🏗️ Craft', color: '#fef3c7', textColor: '#92400e', grade: '3' },
+  { id: 'dicequest', label: '🎲 DiceQuest', color: '#ffedd5', textColor: '#9a3412', grade: '3' },
+  { id: 'multblitz', label: '⚡ Blitz Perkalian', color: '#fef3c7', textColor: '#92400e', grade: '3' },
+  { id: 'bubble', label: '🎈 Bubble Math', color: '#d1fae5', textColor: '#065f46', grade: '3' },
+
+  // ========== Kelas 4 ==========
+  { id: 'pecahan4', label: '🍕 Pecahan 4', color: '#fef3c7', textColor: '#92400e', grade: '4' },
+  { id: 'desimalfun', label: '🔢 Desimal Fun', color: '#cffafe', textColor: '#155e75', grade: '4' },
+  { id: 'kpkfpb', label: '🔑 KPK & FPB', color: '#ede9fe', textColor: '#5b21b6', grade: '4' },
+  { id: 'sudut', label: '📐 Sudut', color: '#fee2e2', textColor: '#991b1b', grade: '4' },
+  { id: 'datachart', label: '📊 Diagram Data', color: '#d1fae5', textColor: '#065f46', grade: '4' },
+  { id: 'memory', label: '🃏 Memory', color: '#ede9fe', textColor: '#5b21b6', grade: '4' },
+  { id: 'timer', label: '⏱️ Timer', color: '#fee2e2', textColor: '#991b1b', grade: '4' },
+  { id: 'mathracer4', label: '🏎️ Racer 4', color: '#fee2e2', textColor: '#991b1b', grade: '4' },
+
+  // ========== Kelas 5 ==========
+  { id: 'pecahan5', label: '🍕 Pecahan 5', color: '#fef3c7', textColor: '#92400e', grade: '5' },
+  { id: 'volumekubus', label: '📦 Volume', color: '#dbeafe', textColor: '#1e40af', grade: '5' },
+  { id: 'kecepatanwaktu', label: '🚗 Kecepatan', color: '#fee2e2', textColor: '#991b1b', grade: '5' },
+  { id: 'skalapeta', label: '🗺️ Skala Peta', color: '#d1fae5', textColor: '#065f46', grade: '5' },
+  { id: 'matholympiad', label: '🏆 Olympiad', color: '#fef3c7', textColor: '#92400e', grade: '5' },
+  { id: 'pizzafraction', label: '🍕 Pecahan', color: '#fef3c7', textColor: '#92400e', grade: '5' },
+  { id: 'mathdetective', label: '🔍 Detektif', color: '#e0e7ff', textColor: '#3730a3', grade: '5' },
+  { id: 'mathscrabble', label: '🔤 Scrabble', color: '#ccfbf1', textColor: '#134e4a', grade: '5' },
+
+  // ========== Kelas 6 ==========
+  { id: 'lingkaranmaster', label: '⭕ Lingkaran', color: '#cffafe', textColor: '#155e75', grade: '6' },
+  { id: 'peluangdata', label: '🎲 Peluang', color: '#ede9fe', textColor: '#5b21b6', grade: '6' },
+  { id: 'bilbulat', label: '➖ Bil Bulat', color: '#e0e7ff', textColor: '#3730a3', grade: '6' },
+  { id: 'statistikdata', label: '📊 Statistik', color: '#fce7f3', textColor: '#9d174d', grade: '6' },
+  { id: 'bangunruang6', label: '📦 Bangun Ruang', color: '#ccfbf1', textColor: '#134e4a', grade: '6' },
+  { id: 'mathracer6', label: '🏎️ Racer 6', color: '#fee2e2', textColor: '#991b1b', grade: '6' },
+  { id: 'mathtower', label: '🏰 Tower', color: '#e5e7eb', textColor: '#374151', grade: '6' },
+  { id: 'geoquest', label: '📐 GeoQuest', color: '#ede9fe', textColor: '#5b21b6', grade: '6' },
+  { id: 'bangunyuk', label: '🏠 Bangun Yuk', color: '#d1fae5', textColor: '#065f46', grade: '6' },
+
+  // ========== Semua Kelas ==========
+  { id: 'aigame', label: '🤖 AI Game', color: '#ede9fe', textColor: '#5b21b6', grade: 'all' },
 ];
 
-export default function GameSelector({ selectedGame, onSelectGame, playSound }: GameSelectorProps) {
+export default function GameSelector({ selectedGame, onSelectGame, playSound, selectedGrade }: GameSelectorProps) {
+  const theme = useThemeStyles();
+
+  const filteredGames = selectedGrade === 'all' 
+    ? games 
+    : games.filter(g => g.grade === selectedGrade || g.grade === 'all');
+
+  const gradeLabel = (grade: string) => {
+    if (grade === 'paud') return 'PAUD';
+    if (grade === 'tk') return 'TK';
+    if (grade === 'all') return 'Semua';
+    return `Kelas ${grade}`;
+  };
+
   return (
-    <div className="space-y-3">
+    <div style={{ marginBottom: '12px' }}>
       {/* Game Buttons */}
-      <div className="flex flex-wrap gap-1.5 sm:gap-2 md:gap-3 justify-center">
-        {games.map((game) => (
+      <div style={{ 
+        display: 'flex', 
+        flexWrap: 'wrap', 
+        gap: '8px', 
+        justifyContent: 'center',
+      }}>
+        {filteredGames.length === 0 && (
+          <p style={{ color: theme.textMuted, fontSize: '14px', padding: '20px' }}>
+            🚧 Game untuk kategori ini sedang dibuat. Coming soon! ✨
+          </p>
+        )}
+        {filteredGames.map((game) => (
           <button
             key={game.id}
-            onClick={() => {
-              onSelectGame(game.id);
-              playSound('click');
+            onClick={() => { onSelectGame(game.id); playSound('click'); }}
+            style={{
+              padding: '10px 16px',
+              borderRadius: '16px',
+              border: selectedGame === game.id 
+                ? `2px solid ${game.textColor}` 
+                : `1px solid ${theme.border}`,
+              background: selectedGame === game.id ? game.color : theme.bgCard,
+              color: selectedGame === game.id ? game.textColor : theme.text,
+              fontWeight: selectedGame === game.id ? '800' : '600',
+              fontSize: '14px',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              boxShadow: selectedGame === game.id 
+                ? `0 4px 12px ${game.color}` 
+                : 'none',
+              transform: selectedGame === game.id ? 'scale(1.05)' : 'scale(1)',
             }}
-            className={`px-2 sm:px-3 md:px-4 lg:px-6 py-1.5 sm:py-2 md:py-3 rounded-full font-bold transition transform hover:scale-105 text-xs sm:text-sm md:text-base relative ${
-              selectedGame === game.id
-                ? `bg-gradient-to-r ${game.color} text-white shadow-lg scale-105`
-                : 'bg-white text-gray-700 hover:bg-gray-100 border-2 border-gray-200'
-            }`}
-            title={`Kelas ${game.grade} - ${game.category}`}
           >
-            <span className="mr-1">{game.label}</span>
-            <span className="text-[10px] opacity-75 hidden sm:inline">({game.grade})</span>
+            {game.label}
           </button>
         ))}
       </div>
 
-      {/* Category Labels */}
-      <div className="flex flex-wrap gap-2 justify-center">
-        <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-green-400"></span>
-          <span className="text-[10px] sm:text-xs text-gray-600">Kelas 1-3</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-yellow-400"></span>
-          <span className="text-[10px] sm:text-xs text-gray-600">Kelas 4-6</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-blue-400"></span>
-          <span className="text-[10px] sm:text-xs text-gray-600">Bahasa</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-purple-400"></span>
-          <span className="text-[10px] sm:text-xs text-gray-600">Advanced</span>
-        </div>
-      </div>
+      {/* Game Count */}
+      <p style={{ 
+        textAlign: 'center', 
+        fontSize: '12px', 
+        color: theme.textMuted,
+        marginTop: '8px',
+      }}>
+        {selectedGrade !== 'all'
+          ? `🎮 ${filteredGames.length} game untuk ${gradeLabel(selectedGrade)}`
+          : `🎮 ${filteredGames.length} game tersedia`
+        }
+      </p>
     </div>
   );
 }

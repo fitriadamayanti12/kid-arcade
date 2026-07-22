@@ -1,283 +1,267 @@
 @import "tailwindcss";
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
+/* ============================================ */
+/* LIGHT MODE */
+/* ============================================ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-hover: #f1f5f9;
+  --text: #1e293b;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --heading: #0f172a;
+  --border: #e2e8f0;
+  --accent: #7c3aed;
+  --accent-light: #ede9fe;
+  --accent-text: #5b21b6;
+  --success: #10b981;
+  --success-bg: #d1fae5;
+  --success-text: #065f46;
+  --danger: #ef4444;
+  --danger-bg: #fee2e2;
+  --danger-text: #991b1b;
+  --warning: #f59e0b;
+  --warning-bg: #fef3c7;
+  --warning-text: #92400e;
+  --shadow: 0 4px 20px rgba(0,0,0,0.08);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ============================================ */
+/* DARK MODE */
+/* ============================================ */
+.dark {
+  --bg: #0f172a;
+  --bg-card: #1e293b;
+  --bg-hover: #334155;
+  --text: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --heading: #f1f5f9;
+  --border: #334155;
+  --accent: #a78bfa;
+  --accent-light: #2e1065;
+  --accent-text: #c4b5fd;
+  --success: #34d399;
+  --success-bg: #064e3b;
+  --success-text: #6ee7b7;
+  --danger: #f87171;
+  --danger-bg: #3b0a0a;
+  --danger-text: #fca5a5;
+  --warning: #fbbf24;
+  --warning-bg: #451a03;
+  --warning-text: #fcd34d;
+  --shadow: 0 4px 20px rgba(0,0,0,0.5);
 }
 
+/* System preference */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not(.light) {
+    --bg: #0f172a;
+    --bg-card: #1e293b;
+    --text: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --heading: #f1f5f9;
   }
 }
+
+/* ============================================ */
+/* BASE */
+/* ============================================ */
+html { scroll-behavior: smooth; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #f8fafc !important;
+  color: #1e293b;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  transition: background-color 0.3s, color 0.3s;
+  -webkit-tap-highlight-color: transparent;
+  line-height: 1.6;
 }
 
-@keyframes bounce {
-  0%, 100% { transform: translateX(-50%) translateY(0); }
-  50% { transform: translateX(-50%) translateY(-10px); }
+.dark body {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
 }
 
-.animate-bounce {
-  animation: bounce 0.5s ease-in-out;
+*:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+h1, h2, h3, h4, h5, h6 { color: var(--heading); font-weight: 700; }
+a { color: var(--accent-text); }
+::placeholder { color: var(--text-muted); opacity: 0.7; }
+
+@media screen and (max-width: 768px) {
+  input, select, textarea { font-size: 16px !important; }
 }
 
-@keyframes zoom-in {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+/* ============================================ */
+/* DARK MODE BACKGROUNDS */
+/* ============================================ */
+.dark main,
+.dark .min-h-screen,
+.dark [class*="min-h-screen"] { background-color: #0f172a !important; }
+.dark .bg-white { background-color: #1e293b !important; }
+.dark .bg-white\/80 { background-color: rgba(30, 41, 59, 0.8) !important; }
+.dark .bg-white\/90 { background-color: rgba(30, 41, 59, 0.9) !important; }
+.dark .bg-white\/95 { background-color: rgba(30, 41, 59, 0.95) !important; }
+.dark .bg-gray-50 { background-color: #0f172a !important; }
+.dark .bg-gray-100 { background-color: #1e293b !important; }
+.dark .bg-gray-200 { background-color: #334155 !important; }
+.dark .bg-blue-50 { background-color: #1e293b !important; }
+.dark .bg-purple-50 { background-color: #1e293b !important; }
+
+/* Gradient backgrounds di dark mode */
+.dark .from-blue-50, .dark .from-blue-100, .dark .from-blue-200, .dark .from-blue-300 { --tw-gradient-from: #1e293b !important; }
+.dark .to-yellow-50, .dark .to-yellow-100 { --tw-gradient-to: #0f172a !important; }
+.dark .to-purple-50, .dark .to-purple-300 { --tw-gradient-to: #1e293b !important; }
+.dark .from-purple-500 { --tw-gradient-from: #581c87 !important; }
+.dark .via-pink-500 { --tw-gradient-via: #9d174d !important; }
+.dark .to-orange-400 { --tw-gradient-to: #9a3412 !important; }
+.dark .from-purple-400 { --tw-gradient-from: #4c1d95 !important; }
+.dark .via-pink-400 { --tw-gradient-via: #831843 !important; }
+.dark .to-orange-300 { --tw-gradient-to: #78350f !important; }
+
+/* ============================================ */
+/* DARK MODE TEXT */
+/* ============================================ */
+.dark .text-gray-400 { color: #9ca3af !important; }
+.dark .text-gray-500 { color: #9ca3af !important; }
+.dark .text-gray-600 { color: #b0b7c3 !important; }
+.dark .text-gray-700 { color: #cbd5e1 !important; }
+.dark .text-gray-800 { color: #e2e8f0 !important; }
+.dark .text-gray-900 { color: #f1f5f9 !important; }
+.dark .text-black { color: #f1f5f9 !important; }
+.dark .text-green-600 { color: #4ade80 !important; }
+.dark .text-green-700 { color: #6ee7b7 !important; }
+.dark .text-red-600 { color: #f87171 !important; }
+.dark .text-red-700 { color: #fca5a5 !important; }
+.dark .text-blue-600 { color: #60a5fa !important; }
+.dark .text-blue-700 { color: #93bbfd !important; }
+.dark .text-purple-600 { color: #a78bfa !important; }
+.dark .text-purple-700 { color: #c4b5fd !important; }
+.dark .text-yellow-600 { color: #fbbf24 !important; }
+.dark .text-yellow-700 { color: #fcd34d !important; }
+.dark .text-orange-600 { color: #fb923c !important; }
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 { color: #f1f5f9 !important; }
+
+/* ============================================ */
+/* DARK MODE BORDERS & SHADOWS */
+/* ============================================ */
+.dark .border-gray-100 { border-color: #334155 !important; }
+.dark .border-gray-200 { border-color: #334155 !important; }
+.dark .border-gray-300 { border-color: #475569 !important; }
+.dark .shadow-sm { box-shadow: 0 1px 2px rgba(0,0,0,0.4) !important; }
+.dark .shadow-md { box-shadow: 0 4px 6px rgba(0,0,0,0.4) !important; }
+.dark .shadow-lg { box-shadow: 0 10px 15px rgba(0,0,0,0.4) !important; }
+.dark .shadow-xl { box-shadow: 0 20px 25px rgba(0,0,0,0.5) !important; }
+.dark .shadow-2xl { box-shadow: 0 25px 50px rgba(0,0,0,0.6) !important; }
+
+/* ============================================ */
+/* DARK MODE HOVER */
+/* ============================================ */
+.dark .hover\:bg-gray-50:hover { background-color: #1e293b !important; }
+.dark .hover\:bg-gray-100:hover { background-color: #334155 !important; }
+.dark .hover\:bg-gray-200:hover { background-color: #475569 !important; }
+.dark .hover\:bg-red-200:hover { background-color: #7f1d1d !important; }
+
+/* ============================================ */
+/* DARK MODE INPUT */
+/* ============================================ */
+.dark input, .dark textarea, .dark select {
+  color: #e2e8f0 !important;
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+.dark input::placeholder, .dark textarea::placeholder { color: #64748b !important; }
+.dark .ring-gray-200 { --tw-ring-color: #334155 !important; }
+
+/* ============================================ */
+/* LIGHT BACKGROUNDS → DARK TEXT */
+/* ============================================ */
+.bg-yellow-50, .bg-yellow-100, .bg-yellow-200,
+.bg-amber-50, .bg-amber-100, .bg-amber-200,
+.bg-orange-50, .bg-orange-100,
+.bg-green-50, .bg-green-100, .bg-green-200,
+.bg-emerald-50, .bg-emerald-100,
+.bg-blue-50, .bg-blue-100, .bg-blue-200,
+.bg-red-50, .bg-red-100, .bg-red-200,
+.bg-purple-50, .bg-purple-100, .bg-purple-200,
+.bg-pink-50, .bg-pink-100,
+.bg-indigo-50, .bg-indigo-100 { color: #1e293b !important; }
+
+.bg-yellow-50 *, .bg-yellow-100 *,
+.bg-amber-50 *, .bg-amber-100 *,
+.bg-green-50 *, .bg-green-100 *,
+.bg-blue-50 *, .bg-blue-100 *,
+.bg-red-50 *, .bg-red-100 *,
+.bg-purple-50 *, .bg-purple-100 *,
+.bg-pink-50 *, .bg-pink-100 * { color: #1e293b !important; }
+
+/* ============================================ */
+/* SOLID BACKGROUNDS → WHITE TEXT */
+/* ============================================ */
+.bg-purple-500, .bg-purple-600, .bg-purple-700,
+.bg-blue-500, .bg-blue-600, .bg-blue-700,
+.bg-green-500, .bg-green-600, .bg-green-700,
+.bg-red-500, .bg-red-600, .bg-red-700,
+.bg-orange-500, .bg-orange-600, .bg-orange-700,
+.bg-pink-500, .bg-pink-600, .bg-pink-700,
+.bg-indigo-500, .bg-indigo-600, .bg-indigo-700,
+.bg-gray-600, .bg-gray-700, .bg-gray-800, .bg-gray-900,
+.bg-black { color: white !important; }
+
+/* ============================================ */
+/* 🔥 FINAL FIX - SPAN/BUTTON TEXT */
+/* ============================================ */
+button span,
+button span[style] {
+  color: #1e293b !important;
 }
 
-.animate-in {
-  animation: zoom-in 0.2s ease-out;
+.dark button span,
+.dark button span[style] {
+  color: #e2e8f0 !important;
 }
 
-/* app/globals.css - Tambahkan di akhir file */
+/* ============================================ */
+/* ANIMATIONS */
+/* ============================================ */
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+@keyframes slide-up { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+@keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.15)} 100%{transform:scale(1)} }
+@keyframes spin { to{transform:rotate(360deg)} }
 
-/* ========== MOBILE RESPONSIVE STYLES ========== */
+.animate-float { animation: float 3s ease-in-out infinite }
+.animate-slide-up { animation: slide-up 0.4s ease-out }
+.animate-shake { animation: shake 0.3s ease-in-out }
+.animate-pop { animation: pop 0.3s ease-in-out }
+.animate-spin { animation: spin 1s linear infinite }
 
-/* Tablet & Mobile (max-width: 1024px) */
-@media (max-width: 1024px) {
-  /* Header */
-  .flex.justify-between.items-center {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  /* Game buttons */
-  .flex.gap-3.mb-6 {
-    gap: 0.5rem;
-  }
-  
-  .px-6.py-3 {
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-  }
-}
-
-/* Mobile (max-width: 768px) */
+/* ============================================ */
+/* RESPONSIVE */
+/* ============================================ */
 @media (max-width: 768px) {
-  /* Layout utama - stack columns */
-  .grid.lg\:grid-cols-3 {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .lg\:col-span-2 {
-    width: 100%;
-    order: 1;
-  }
-  
-  /* Sidebar jadi di bawah */
-  .lg\:col-span-1 {
-    width: 100%;
-    order: 2;
-    margin-top: 1rem;
-  }
-  
-  /* Game area padding */
-  .bg-white\/80.rounded-3xl.p-6 {
-    padding: 1rem;
-  }
-  
-  /* Puzzle grid - dari 2 kolom jadi 1 kolom */
-  .grid-cols-2 {
-    grid-template-columns: 1fr;
-  }
-  
-  /* Memory match grid - dari 4 kolom jadi 2 kolom */
-  .grid-cols-4 {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  /* Bubble math - posisi balon lebih rapat */
-  .relative.h-\[400px\] {
-    height: 300px;
-  }
-  
-  .text-5xl {
-    font-size: 2.5rem;
-  }
-  
-  /* Tombol game selection - wrap ke 2 baris */
-  .flex.gap-3.mb-6 {
-    gap: 0.5rem;
-    justify-content: center;
-  }
-  
-  button.px-6.py-3 {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.75rem;
-  }
-  
-  /* Header title */
-  .text-3xl.md\:text-4xl {
-    font-size: 1.5rem;
-  }
-  
-  /* Avatar size */
-  .text-5xl {
-    font-size: 2.5rem;
-  }
-  
-  /* Progress dashboard */
-  .bg-white\/90.rounded-2xl.p-6 {
-    padding: 1rem;
-  }
-  
-  /* Leaderboard */
-  .bg-gradient-to-br.p-5 {
-    padding: 1rem;
-  }
-  
-  /* Feedback toast */
-  .fixed.bottom-8 {
-    bottom: 1rem;
-    font-size: 1rem;
-    padding: 0.5rem 1rem;
-    white-space: nowrap;
-  }
-  
-  /* Reward modal */
-  .max-w-md {
-    max-width: 90%;
-    margin: 0 auto;
-  }
-  
-  .text-7xl {
-    font-size: 3rem;
-  }
-  
-  .text-3xl {
-    font-size: 1.5rem;
-  }
+  .grid-cols-4 { grid-template-columns: repeat(2, 1fr) }
+  .grid-cols-2 { grid-template-columns: 1fr }
+  .min-h-\[400px\] { min-height: 300px }
+  .text-5xl { font-size: 2rem }
+  .text-7xl { font-size: 3rem }
 }
-
-/* Mobile kecil (max-width: 480px) */
 @media (max-width: 480px) {
-  /* Game buttons lebih kecil */
-  button.px-6.py-3 {
-    padding: 0.4rem 0.6rem;
-    font-size: 0.7rem;
-  }
-  
-  /* Emoji di puzzle */
-  .text-5xl {
-    font-size: 2rem;
-  }
-  
-  .text-lg {
-    font-size: 0.875rem;
-  }
-  
-  /* Memory match kartu */
-  .h-32 {
-    height: 80px;
-  }
-  
-  .text-4xl {
-    font-size: 1.5rem;
-  }
-  
-  /* Fill blanks input */
-  .w-64 {
-    width: 160px;
-  }
-  
-  .text-5xl.font-mono {
-    font-size: 1.8rem;
-    word-break: break-all;
-  }
-  
-  /* Progress bar text */
-  .text-sm {
-    font-size: 0.7rem;
-  }
-  
-  /* Header */
-  h1.text-3xl {
-    font-size: 1.2rem;
-  }
-  
-  /* Sidebar toggle buttons */
-  .px-4.py-2 {
-    padding: 0.3rem 0.8rem;
-    font-size: 0.7rem;
-  }
-  
-  /* Reward modal */
-  .text-7xl {
-    font-size: 2.5rem;
-  }
-  
-  .text-2xl {
-    font-size: 1rem;
-  }
+  .text-3xl { font-size: 1.5rem }
+  .text-4xl { font-size: 1.75rem }
 }
 
-/* Landscape mode untuk mobile */
-@media (max-width: 768px) and (orientation: landscape) {
-  .min-h-screen {
-    min-height: auto;
-  }
-  
-  .relative.h-\[400px\] {
-    height: 200px;
-  }
-  
-  .grid-cols-4 {
-    grid-template-columns: repeat(4, 1fr);
-  }
-  
-  .h-28 {
-    height: 70px;
-  }
-}
+/* ============================================ */
+/* SCROLLBAR & SELECTION */
+/* ============================================ */
+::-webkit-scrollbar { width: 6px; height: 6px }
+::-webkit-scrollbar-track { background: transparent }
+::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px }
+.dark ::-webkit-scrollbar-thumb { background: #475569 }
+::selection { background: #7c3aed; color: white }
 
-/* Touch-friendly adjustments untuk mobile */
-@media (max-width: 768px) {
-  /* Perbesar area tap untuk drag & drop */
-  .cursor-grab {
-    cursor: pointer;
-    min-height: 80px;
-  }
-  
-  /* Spacing yang lebih nyaman untuk touch */
-  .gap-4 {
-    gap: 0.75rem;
-  }
-  
-  .p-4 {
-    padding: 0.75rem;
-  }
-  
-  /* Input field lebih besar untuk touch */
-  input.p-3 {
-    padding: 0.75rem;
-    font-size: 1rem;
-  }
-  
-  button.px-8.py-3 {
-    padding: 0.75rem 1rem;
-  }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important }
 }

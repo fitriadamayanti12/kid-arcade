@@ -3,10 +3,11 @@
 
 import { useState, useEffect } from 'react';
 import { useSoundEffect } from '@/hooks/useSoundEffect';
+import { useThemeStyles } from '@/hooks/useThemeStyles';
 
 interface WordMatchProps {
   playerName: string;
-  onComplete: (stars: number, score: number) => void;
+  onComplete: (stars: number, extra?: any) => void; // ← FIX: tambah extra
 }
 
 interface WordCard {
@@ -28,6 +29,7 @@ const words = [
 ];
 
 export default function WordMatch({ playerName, onComplete }: WordMatchProps) {
+  const theme = useThemeStyles();
   const [cards, setCards] = useState<WordCard[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [matches, setMatches] = useState(0);
@@ -36,12 +38,10 @@ export default function WordMatch({ playerName, onComplete }: WordMatchProps) {
   const [isComplete, setIsComplete] = useState(false);
   const { playSound } = useSoundEffect();
 
-  useEffect(() => {
-    startNewGame();
-  }, []);
+  useEffect(() => { startNewGame(); }, []);
 
   const startNewGame = () => {
-    const shuffled = [...words, ...words]
+    const shuffled = [...words]
       .sort(() => Math.random() - 0.5)
       .map((item, idx) => ({
         id: idx,
@@ -55,107 +55,115 @@ export default function WordMatch({ playerName, onComplete }: WordMatchProps) {
     setSelectedId(null);
     setIsComplete(false);
     setStartTime(Date.now());
-    playSound('click');
   };
 
   const handleCardClick = (clickedCard: WordCard) => {
-    if (isComplete) return;
-    if (clickedCard.matched) return;
-    if (selectedId === clickedCard.id) return;
+    if (isComplete || clickedCard.matched || selectedId === clickedCard.id) return;
 
     if (selectedId === null) {
       setSelectedId(clickedCard.id);
-      playSound('click');
       return;
     }
 
     const selectedCard = cards.find(c => c.id === selectedId)!;
     setMoves(m => m + 1);
 
-    // Cek apakah cocok (text dengan image dari pasangannya)
-    const isMatch =
-      (selectedCard.text === clickedCard.text && selectedCard.image === clickedCard.image) ||
-      (selectedCard.text === clickedCard.image && selectedCard.image === clickedCard.text);
+    const isMatch = selectedCard.text === clickedCard.text;
 
     if (isMatch) {
-      // Match found!
       setCards(cards.map(c =>
-        c.id === selectedId || c.id === clickedCard.id
-          ? { ...c, matched: true }
-          : c
+        c.id === selectedId || c.id === clickedCard.id ? { ...c, matched: true } : c
       ));
-      setMatches(m => m + 1);
-      playSound('correct');
-
       const newMatches = matches + 1;
+      setMatches(newMatches);
+      playSound('win');
+
       if (newMatches === words.length && startTime) {
-        const timeSpent = (Date.now() - startTime) / 1000;
+        const timeSpent = Math.round((Date.now() - startTime) / 1000);
         let stars = 1;
         if (moves + 1 <= 12) stars = 3;
         else if (moves + 1 <= 18) stars = 2;
-
         setIsComplete(true);
-        playSound('win');
-        onComplete(stars, timeSpent);
+        onComplete(stars, { score: stars * 10, time: timeSpent, moves: moves + 1 });
       }
     } else {
-      playSound('wrong');
+      playSound('click');
     }
-
     setSelectedId(null);
   };
 
-  // app/components/WordMatch.tsx - Responsive version
-
   return (
-    <div className="p-3 sm:p-4 md:p-6">
-      <div className="text-center mb-4 sm:mb-6">
-        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-teal-600 mb-2">📖 Cocokkan Gambar & Kata</h2>
-        <p className="text-xs sm:text-sm text-gray-600">Baca kata, lalu cari gambar yang cocok!</p>
-        <div className="flex justify-center gap-4 sm:gap-6 mt-2 sm:mt-3 text-xs sm:text-sm">
-          <span>🎯 Pasangan: {matches} / {words.length}</span>
-          <span>🔄 Langkah: {moves}</span>
+    <div style={{ padding: '16px', maxWidth: '600px', margin: '0 auto' }}>
+      <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+        <h2 style={{ fontSize: '22px', fontWeight: '800', color: theme.heading, marginBottom: '4px' }}>
+          📖 Cocokkan Kata
+        </h2>
+        <p style={{ fontSize: '13px', color: theme.textSecondary }}>
+          Cari pasangan kata yang sama!
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '8px', fontSize: '13px', color: theme.textSecondary }}>
+          <span>🎯 {matches}/{words.length}</span>
+          <span>🔄 {moves} langkah</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 max-w-3xl mx-auto">
+      {/* Game Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
         {cards.map(card => (
           <button
             key={card.id}
             onClick={() => handleCardClick(card)}
             disabled={card.matched}
-            className={`h-20 sm:h-24 md:h-28 rounded-xl sm:rounded-2xl text-sm sm:text-base md:text-xl font-bold transition transform ${card.matched
-                ? 'bg-green-300 opacity-60 cursor-default scale-95'
-                : selectedId === card.id
-                  ? 'bg-yellow-300 scale-95 ring-2 sm:ring-4 ring-yellow-500'
-                  : 'bg-gradient-to-br from-teal-200 to-cyan-200 hover:scale-105 hover:shadow-lg'
-              }`}
+            style={{
+              aspectRatio: '1',
+              borderRadius: '14px',
+              border: 'none',
+              fontSize: card.text.length > 3 ? '14px' : '28px',
+              fontWeight: '700',
+              cursor: card.matched ? 'default' : 'pointer',
+              background: card.matched 
+                ? '#d1fae5' 
+                : selectedId === card.id 
+                  ? '#fef3c7' 
+                  : theme.bgHover,
+              color: card.matched ? '#10b981' : theme.text,
+              opacity: card.matched ? 0.6 : 1,
+              transform: selectedId === card.id ? 'scale(0.95)' : 'scale(1)',
+              transition: 'all 0.2s',
+              boxShadow: selectedId === card.id ? '0 0 0 3px #f59e0b' : 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '6px',
+            }}
           >
-            <div className="flex items-center justify-center h-full p-1 sm:p-2">
-              {card.matched ? (
-                '✓'
-              ) : (
-                <span className={card.text.length > 2 ? 'text-xs sm:text-sm md:text-lg font-bold break-words text-center' : 'text-2xl sm:text-3xl md:text-4xl'}>
-                  {card.text.length > 2 ? card.text : card.image}
-                </span>
-              )}
-            </div>
+            {card.matched ? '✓' : card.text.length > 3 ? card.text : card.image}
           </button>
         ))}
       </div>
 
-      <div className="text-center mt-4 sm:mt-6">
-        <button
-          onClick={startNewGame}
-          className="bg-teal-500 text-white px-4 sm:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold hover:bg-teal-600 transition"
-        >
+      {/* New Game Button */}
+      <div style={{ textAlign: 'center', marginTop: '16px' }}>
+        <button onClick={startNewGame} style={{
+          padding: '10px 24px', borderRadius: '999px', border: 'none',
+          background: '#14b8a6', color: '#fff', fontWeight: '700',
+          fontSize: '14px', cursor: 'pointer',
+        }}>
           🔄 Game Baru
         </button>
       </div>
 
-      <div className="text-center mt-3 sm:mt-4 text-xs text-gray-500">
-        💡 Klik kartu untuk membuka. Cocokkan kata dengan gambar!
-      </div>
+      {/* Complete Message */}
+      {isComplete && (
+        <div style={{
+          marginTop: '16px', padding: '12px', borderRadius: '12px',
+          background: '#d1fae5', color: '#065f46',
+          textAlign: 'center', fontWeight: '700', fontSize: '16px',
+          animation: 'pop 0.3s ease-out',
+        }}>
+          🎉 Selesai! {moves} langkah
+        </div>
+      )}
     </div>
   );
 }

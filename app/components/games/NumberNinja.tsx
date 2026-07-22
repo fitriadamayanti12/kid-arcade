@@ -1,603 +1,200 @@
-// components/games/NumberNinja.tsx
+// app/components/games/NumberNinja.tsx
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useThemeStyles } from '@/hooks/useThemeStyles';
 
 interface NumberNinjaProps {
   onComplete: (stars: number, extra?: any) => void;
 }
 
-interface Challenge {
-  id: number;
-  type: 'pattern' | 'missing' | 'balance' | 'comparison';
-  question: string;
-  visual: number[];
-  answer: number;
-  options: number[];
-  explanation: string;
-  points: number;
-  timeLimit: number;
-}
-
-type GameMode = 'zen' | 'speed' | 'survival';
-type Difficulty = 'easy' | 'medium' | 'hard';
-
-const NINJA_RANKS = ['🥷 Pemula', '🎯 Pelatih', '⚔️ Prajurit', '🗡️ Ahli', '👑 Master Ninja'];
+const RANKS = ['🥷 Pemula', '🎯 Pelatih', '⚔️ Prajurit', '🗡️ Ahli', '👑 Master'];
 
 export default function NumberNinja({ onComplete }: NumberNinjaProps) {
-  const [gameMode, setGameMode] = useState<GameMode>('zen');
-  const [difficulty, setDifficulty] = useState<Difficulty>('easy');
-  const [currentChallenge, setCurrentChallenge] = useState<Challenge | null>(null);
-  const [challengeIndex, setChallengeIndex] = useState(0);
+  const theme = useThemeStyles();
+  const [step, setStep] = useState<'menu' | 'play' | 'complete'>('menu');
+  const [q, setQ] = useState<{ type: string; text: string; answer: number; opts: number[]; points: number; visual?: number[]; hint: string } | null>(null);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
   const [bestStreak, setBestStreak] = useState(0);
   const [lives, setLives] = useState(3);
-  const [timeLeft, setTimeLeft] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [showFeedback, setShowFeedback] = useState(false);
+  const [total, setTotal] = useState(0);
+  const [correct, setCorrect] = useState(0);
+  const [rank, setRank] = useState(0);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [feedback, setFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
-  const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'complete'>('menu');
-  const [totalChallenges, setTotalChallenges] = useState(0);
-  const [correctAnswers, setCorrectAnswers] = useState(0);
-  const [showExplanation, setShowExplanation] = useState(false);
-  const [ninjaRank, setNinjaRank] = useState(0);
-  const [comboMultiplier, setComboMultiplier] = useState(1);
-  const [particles, setParticles] = useState<{ id: number; x: number; y: number; emoji: string }[]>([]);
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [mode, setMode] = useState<'zen' | 'speed'>('zen');
+  const [diff, setDiff] = useState<'easy' | 'medium' | 'hard'>('easy');
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const gameAreaRef = useRef<HTMLDivElement>(null);
 
-  const generateChallenge = useCallback((diff: Difficulty): Challenge => {
-    const types: Challenge['type'][] = ['pattern', 'missing', 'balance', 'comparison'];
-    const type = types[Math.floor(Math.random() * types.length)];
-    
-    let challenge: Challenge;
-    
+  const genQ = useCallback(() => {
+    const types = ['pattern', 'missing', 'balance', 'compare'];
+    const type = types[Math.floor(Math.random() * 4)];
+    let text = '', answer = 0, points = 15, visual: number[] = [], hint = '';
+    const d = diff === 'easy' ? 1 : diff === 'medium' ? 2 : 3;
+
     switch (type) {
       case 'pattern': {
-        // Pola bilangan: 2, 4, 6, ?, 10
-        const patterns = [
-          { sequence: [2, 4, 6, 8, 10], answer: 8, hint: '+2 setiap langkah' },
-          { sequence: [3, 6, 9, 12, 15], answer: 12, hint: '+3 setiap langkah' },
-          { sequence: [5, 10, 15, 20, 25], answer: 20, hint: '+5 setiap langkah' },
-          { sequence: [1, 3, 5, 7, 9], answer: 7, hint: '+2 bilangan ganjil' },
-          { sequence: [2, 6, 10, 14, 18], answer: 14, hint: '+4 setiap langkah' },
-          { sequence: [10, 20, 30, 40, 50], answer: 40, hint: '+10 setiap langkah' },
-          { sequence: [1, 2, 4, 8, 16], answer: 8, hint: '×2 setiap langkah' },
-          { sequence: [3, 9, 27, 81, 243], answer: 81, hint: '×3 setiap langkah' },
-        ];
-        
-        const pattern = patterns[Math.floor(Math.random() * patterns.length)];
-        const missingIndex = 3; // Index yang hilang
-        
-        challenge = {
-          id: Date.now(),
-          type: 'pattern',
-          question: '🔢 Temukan angka yang hilang dalam pola!',
-          visual: pattern.sequence.map((n, i) => i === missingIndex ? -1 : n),
-          answer: pattern.answer,
-          options: generateOptions(pattern.answer, pattern.sequence),
-          explanation: pattern.hint,
-          points: 15,
-          timeLimit: diff === 'easy' ? 20 : diff === 'medium' ? 15 : 10,
-        };
+        const patterns = [[2,4,6,8,10],[3,6,9,12,15],[5,10,15,20,25],[1,3,5,7,9],[2,6,10,14,18]];
+        const p = patterns[Math.floor(Math.random() * patterns.length)];
+        const mi = 3; answer = p[mi]; visual = p.map((n, i) => i === mi ? -1 : n);
+        text = 'Temukan angka yang hilang!'; hint = `+${p[1]-p[0]} setiap langkah`;
         break;
       }
-      
       case 'missing': {
-        // Mencari angka hilang dalam operasi
-        const operations = [
-          { equation: (n: number) => `${n} + ? = ${n + 5}`, answer: 5, hint: 'Kurangkan hasil dengan angka pertama' },
-          { equation: (n: number) => `? + ${n} = ${n + 7}`, answer: 7, hint: 'Kurangkan hasil dengan angka kedua' },
-          { equation: (n: number) => `${n + 3} - ? = ${n}`, answer: 3, hint: 'Kurangkan angka besar dengan kecil' },
-          { equation: (n: number) => `? × ${n} = ${n * 4}`, answer: 4, hint: 'Bagi hasil dengan angka yang diketahui' },
-        ];
-        
-        const op = operations[Math.floor(Math.random() * operations.length)];
-        const baseNum = Math.floor(Math.random() * 10) + 1;
-        const eqString = op.equation(baseNum);
-        
-        challenge = {
-          id: Date.now(),
-          type: 'missing',
-          question: `🔍 Cari angka yang hilang: ${eqString}`,
-          visual: [],
-          answer: op.answer,
-          options: generateOptions(op.answer, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
-          explanation: op.hint,
-          points: 20,
-          timeLimit: diff === 'easy' ? 25 : diff === 'medium' ? 20 : 15,
-        };
+        const a = Math.floor(Math.random() * 10) + 1;
+        const ops = [{ t: `${a} + ? = ${a + 5}`, ans: 5 }, { t: `? + ${a} = ${a + 7}`, ans: 7 }, { t: `${a + 3} - ? = ${a}`, ans: 3 }];
+        const o = ops[Math.floor(Math.random() * ops.length)];
+        text = `Cari angka hilang: ${o.t}`; answer = o.ans; hint = 'Gunakan operasi kebalikan';
         break;
       }
-      
       case 'balance': {
-        // Menyeimbangkan timbangan
-        const leftNum = Math.floor(Math.random() * 20) + 10;
-        const rightNum = Math.floor(Math.random() * 15) + 5;
-        const answer = leftNum - rightNum;
-        
-        challenge = {
-          id: Date.now(),
-          type: 'balance',
-          question: `⚖️ Timbangan kiri = ${leftNum}, kanan = ${rightNum}. Berapa yang harus ditambah ke kanan agar seimbang?`,
-          visual: [leftNum, rightNum],
-          answer: answer,
-          options: generateOptions(answer, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20]),
-          explanation: `${leftNum} - ${rightNum} = ${answer}. Tambah ${answer} ke sisi kanan.`,
-          points: 25,
-          timeLimit: diff === 'easy' ? 30 : diff === 'medium' ? 20 : 15,
-        };
+        const l = Math.floor(Math.random() * 20) + 10; const r = Math.floor(Math.random() * 15) + 5;
+        answer = l - r; visual = [l, r]; text = `Timbangan: kiri ${l}, kanan ${r}. Tambah berapa ke kanan?`; hint = `${l} - ${r} = ${answer}`;
         break;
       }
-      
-      case 'comparison': {
-        // Membandingkan nilai
-        const pairs = [
-          { expr1: '3 × 4', expr2: '2 × 6', answer: 0, symbol: '=', hint: 'Keduanya = 12' },
-          { expr1: '5 + 8', expr2: '7 + 5', answer: 1, symbol: '>', hint: '13 > 12' },
-          { expr1: '20 - 7', expr2: '30 - 18', answer: 1, symbol: '>', hint: '13 > 12' },
-          { expr1: '4 × 5', expr2: '10 + 10', answer: 0, symbol: '=', hint: 'Keduanya = 20' },
-          { expr1: '100 ÷ 4', expr2: '5 × 5', answer: 0, symbol: '=', hint: 'Keduanya = 25' },
-        ];
-        
-        const pair = pairs[Math.floor(Math.random() * pairs.length)];
-        
-        challenge = {
-          id: Date.now(),
-          type: 'comparison',
-          question: `📊 Mana yang benar? ${pair.expr1} ... ${pair.expr2}`,
-          visual: [],
-          answer: pair.answer, // 0 = sama, 1 = lebih besar, -1 = lebih kecil
-          options: [0, 1, -1],
-          explanation: pair.hint,
-          points: 15,
-          timeLimit: diff === 'easy' ? 25 : diff === 'medium' ? 20 : 15,
-        };
+      case 'compare': {
+        const pairs = [{ a: 3*4, b: 2*6, ans: 0 }, { a: 5+8, b: 7+5, ans: 1 }, { a: 20-7, b: 30-18, ans: 1 }];
+        const p = pairs[Math.floor(Math.random() * pairs.length)];
+        text = `Mana lebih besar? A=${p.a}, B=${p.b}`; answer = p.ans === 0 ? 0 : p.ans === 1 ? 1 : -1;
+        hint = p.ans === 0 ? 'Sama besar' : p.ans === 1 ? 'A > B' : 'A < B'; points = 10;
         break;
       }
     }
-    
-    return challenge;
-  }, []);
+    const opts = new Set([answer]);
+    if (type === 'compare') { opts.add(0); opts.add(1); opts.add(-1); }
+    else { while (opts.size < 4) { const off = Math.floor(Math.random() * 5) + 1; opts.add(Math.random() > 0.5 ? answer + off : Math.max(0, answer - off)); } }
+    const tl = mode === 'speed' ? (diff === 'easy' ? 8 : diff === 'medium' ? 6 : 4) : 30;
+    setQ({ type, text, answer, opts: Array.from(opts).sort(() => Math.random() - 0.5), points, visual, hint });
+    setTimeLeft(tl);
+  }, [diff, mode]);
 
-  const generateOptions = (correct: number, pool: number[]): number[] => {
-    const options = new Set<number>([correct]);
-    while (options.size < 4) {
-      const randomNum = pool[Math.floor(Math.random() * pool.length)];
-      if (randomNum !== correct && randomNum > 0) {
-        options.add(randomNum);
-      }
-    }
-    return Array.from(options).sort(() => Math.random() - 0.5);
+  const start = (m: 'zen' | 'speed') => { setMode(m); setStep('play'); setScore(0); setStreak(0); setLives(m === 'speed' ? 5 : 3); setTotal(0); setCorrect(0); setRank(0); genQ(); };
+
+  const handle = (ans: number) => {
+    if (!q || feedback) return;
+    setSelected(ans); setFeedback(true);
+    const ok = (q.type === 'compare') ? ans === q.answer : ans === q.answer;
+    setIsCorrect(ok); setTotal(t => t + 1);
+    if (ok) {
+      const pts = q.points * (streak >= 10 ? 4 : streak >= 5 ? 2 : 1);
+      setScore(s => s + pts); setCorrect(c => c + 1);
+      setStreak(s => { const ns = s + 1; setBestStreak(b => Math.max(b, ns)); if (ns >= 20) setRank(4); else if (ns >= 10) setRank(2); else if (ns >= 5) setRank(1); return ns; });
+    } else { setStreak(0); setLives(l => { const nl = l - 1; if (nl <= 0) setStep('complete'); return Math.max(0, nl); }); }
+    setTimeout(() => { if (step === 'play') { genQ(); setSelected(null); setFeedback(false); } }, 1000);
   };
 
-  const startGame = useCallback((mode: GameMode) => {
-    setGameMode(mode);
-    setScore(0);
-    setStreak(0);
-    setBestStreak(0);
-    setLives(mode === 'survival' ? 5 : 3);
-    setChallengeIndex(0);
-    setTotalChallenges(0);
-    setCorrectAnswers(0);
-    setComboMultiplier(1);
-    setNinjaRank(0);
-    setGameState('playing');
-    
-    const challenge = generateChallenge(difficulty);
-    setCurrentChallenge(challenge);
-    setTimeLeft(challenge.timeLimit);
-  }, [difficulty, generateChallenge]);
-
-  const handleAnswer = useCallback((answer: number) => {
-    if (!currentChallenge || showFeedback) return;
-    
-    setSelectedAnswer(answer);
-    const correct = answer === currentChallenge.answer;
-    setIsCorrect(correct);
-    setShowFeedback(true);
-    setTotalChallenges(prev => prev + 1);
-    
-    if (correct) {
-      const pointsEarned = currentChallenge.points * comboMultiplier;
-      setScore(prev => prev + pointsEarned);
-      setCorrectAnswers(prev => prev + 1);
-      setStreak(prev => {
-        const newStreak = prev + 1;
-        setBestStreak(current => Math.max(current, newStreak));
-        
-        // Update combo multiplier
-        if (newStreak >= 10) setComboMultiplier(4);
-        else if (newStreak >= 7) setComboMultiplier(3);
-        else if (newStreak >= 4) setComboMultiplier(2);
-        else setComboMultiplier(1);
-        
-        // Update ninja rank
-        if (newStreak >= 20) setNinjaRank(4);
-        else if (newStreak >= 15) setNinjaRank(3);
-        else if (newStreak >= 10) setNinjaRank(2);
-        else if (newStreak >= 5) setNinjaRank(1);
-        
-        return newStreak;
-      });
-      
-      // Spawn particles
-      if (gameAreaRef.current) {
-        const rect = gameAreaRef.current.getBoundingClientRect();
-        const newParticles = Array.from({ length: 5 }, (_, i) => ({
-          id: Date.now() + i,
-          x: Math.random() * rect.width,
-          y: Math.random() * rect.height,
-          emoji: ['✨', '💫', '⭐', '🌟', '💥'][i],
-        }));
-        setParticles(prev => [...prev, ...newParticles]);
-        setTimeout(() => {
-          setParticles(prev => prev.filter(p => !newParticles.find(np => np.id === p.id)));
-        }, 1000);
-      }
-    } else {
-      setStreak(0);
-      setComboMultiplier(1);
-      setLives(prev => {
-        const newLives = prev - 1;
-        if (newLives <= 0) {
-          setTimeout(() => endGame(), 2000);
-          return 0;
-        }
-        return newLives;
-      });
-    }
-    
-    setTimeout(() => {
-      if (gameState === 'playing') {
-        const newChallenge = generateChallenge(difficulty);
-        setCurrentChallenge(newChallenge);
-        setTimeLeft(newChallenge.timeLimit);
-        setChallengeIndex(prev => prev + 1);
-        setSelectedAnswer(null);
-        setShowFeedback(false);
-        setShowExplanation(false);
-      }
-    }, 1500);
-  }, [currentChallenge, showFeedback, comboMultiplier, gameState, difficulty, generateChallenge]);
-
-  const endGame = useCallback(() => {
-    setGameState('complete');
-    if (timerRef.current) clearInterval(timerRef.current);
-    
-    const stars = correctAnswers >= 20 ? 3 : correctAnswers >= 10 ? 2 : 1;
-    onComplete(stars, { 
-      score, 
-      correctAnswers, 
-      totalChallenges, 
-      bestStreak, 
-      ninjaRank: NINJA_RANKS[ninjaRank] 
-    });
-  }, [score, correctAnswers, totalChallenges, bestStreak, ninjaRank, onComplete]);
-
-  // Timer effect
   useEffect(() => {
-    if (gameState === 'playing' && timeLeft > 0) {
-      timerRef.current = setInterval(() => {
-        setTimeLeft(prev => {
-          if (prev <= 1) {
-            handleAnswer(-1); // Time's up, wrong answer
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-      
-      return () => {
-        if (timerRef.current) clearInterval(timerRef.current);
-      };
-    }
-  }, [gameState, timeLeft, handleAnswer]);
+    if (step !== 'play' || mode !== 'speed') return;
+    if (timeLeft <= 0) { handle(-1); return; }
+    timerRef.current = setInterval(() => setTimeLeft(t => t - 1), 1000);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [step, timeLeft, mode]);
 
-  const renderPattern = (visual: number[]) => {
-    return (
-      <div className="flex items-center justify-center gap-2 sm:gap-4 my-6">
-        {visual.map((num, idx) => (
-          <div key={idx} className="relative">
-            {num === -1 ? (
-              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-xl flex items-center justify-center text-2xl sm:text-3xl font-bold text-white animate-pulse border-2 border-yellow-600">
-                ?
-              </div>
-            ) : (
-              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-400 to-purple-400 rounded-xl flex items-center justify-center text-2xl sm:text-3xl font-bold text-white shadow-lg">
-                {num}
-              </div>
-            )}
-            {idx < visual.length - 1 && (
-              <div className="absolute -right-3 top-1/2 transform -translate-y-1/2 text-gray-400 font-bold text-xl">
-                →
-              </div>
-            )}
-          </div>
+  const handleComplete = () => {
+    const stars = correct >= 15 ? 3 : correct >= 10 ? 2 : 1;
+    onComplete(stars, { score, correct, total, bestStreak, rank: RANKS[rank] });
+  };
+
+  if (step === 'menu') return (
+    <div style={{ maxWidth: '500px', margin: '0 auto', padding: '24px', textAlign: 'center', background: theme.bg, minHeight: '400px' }}>
+      <div style={{ fontSize: '60px', marginBottom: '8px' }}>🥷</div>
+      <h2 style={{ fontSize: '28px', fontWeight: '800', color: theme.heading }}>Number Ninja!</h2>
+      <p style={{ fontSize: '14px', color: theme.textSecondary, marginBottom: '16px' }}>Latih kecepatan & ketepatan matematika!</p>
+      <div style={{ display: 'grid', gap: '8px', marginBottom: '16px' }}>
+        <button onClick={() => start('zen')} style={btn('#10b981')}>🧘 Zen Mode</button>
+        <button onClick={() => start('speed')} style={btn('#f59e0b')}>⚡ Speed Mode</button>
+      </div>
+      <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+        {(['easy', 'medium', 'hard'] as const).map(d => (
+          <button key={d} onClick={() => setDiff(d)} style={{ padding: '8px 16px', borderRadius: '10px', border: 'none', background: diff === d ? '#7c3aed' : theme.bgHover, color: diff === d ? '#fff' : theme.text, fontWeight: '600', cursor: 'pointer' }}>{d === 'easy' ? '⭐' : d === 'medium' ? '⭐⭐' : '⭐⭐⭐'}</button>
         ))}
       </div>
-    );
-  };
-
-  const renderBalance = (visual: number[]) => {
-    const [left, right] = visual;
-    const diff = left - right;
-    const leftHeight = Math.min(100, left * 3);
-    const rightHeight = Math.min(100, right * 3);
-    
-    return (
-      <div className="flex items-end justify-center gap-8 my-6 h-32">
-        <div className="flex flex-col items-center">
-          <div className="text-lg font-bold mb-1">{left}</div>
-          <div 
-            className="w-16 bg-gradient-to-t from-blue-500 to-blue-300 rounded-t-lg transition-all duration-500"
-            style={{ height: `${leftHeight}px` }}
-          ></div>
-          <div className="w-32 h-2 bg-gray-400 rounded-full mt-1"></div>
-        </div>
-        
-        <div className="text-4xl self-center mb-8">
-          {diff > 0 ? '>' : diff < 0 ? '<' : '='}
-        </div>
-        
-        <div className="flex flex-col items-center">
-          <div className="text-lg font-bold mb-1">{right}</div>
-          <div 
-            className="w-16 bg-gradient-to-t from-red-500 to-red-300 rounded-t-lg transition-all duration-500"
-            style={{ height: `${rightHeight}px` }}
-          ></div>
-          <div className="w-32 h-2 bg-gray-400 rounded-full mt-1"></div>
-        </div>
-      </div>
-    );
-  };
-
-  if (gameState === 'menu') {
-    return (
-      <div className="text-center py-8">
-        <div className="text-6xl mb-4 animate-bounce">🥷</div>
-        <h2 className="text-3xl font-bold mb-2 text-gray-800">Number Ninja!</h2>
-        <p className="text-gray-600 mb-6">Latih kecepatan & ketepatan matematika!</p>
-        
-        <div className="space-y-4 max-w-sm mx-auto">
-          <div className="bg-white rounded-2xl p-4 shadow">
-            <h3 className="font-bold mb-2">🎯 Pilih Mode:</h3>
-            <div className="space-y-2">
-              <button
-                onClick={() => startGame('zen')}
-                className="w-full p-3 bg-gradient-to-r from-green-400 to-emerald-400 text-white rounded-xl font-bold hover:scale-105 transition"
-              >
-                🧘 Zen Mode (Santai, tanpa timer)
-              </button>
-              <button
-                onClick={() => startGame('speed')}
-                className="w-full p-3 bg-gradient-to-r from-yellow-400 to-orange-400 text-white rounded-xl font-bold hover:scale-105 transition"
-              >
-                ⚡ Speed Mode (Cepat & tepat!)
-              </button>
-              <button
-                onClick={() => startGame('survival')}
-                className="w-full p-3 bg-gradient-to-r from-red-400 to-pink-400 text-white rounded-xl font-bold hover:scale-105 transition"
-              >
-                💀 Survival Mode (5 nyawa, bertahan!)
-              </button>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-2xl p-4 shadow">
-            <h3 className="font-bold mb-2">📊 Kesulitan:</h3>
-            <div className="flex gap-2">
-              {(['easy', 'medium', 'hard'] as Difficulty[]).map(d => (
-                <button
-                  key={d}
-                  onClick={() => setDifficulty(d)}
-                  className={`flex-1 p-2 rounded-xl font-bold transition ${
-                    difficulty === d
-                      ? 'bg-purple-500 text-white'
-                      : 'bg-gray-100 hover:bg-gray-200'
-                  }`}
-                >
-                  {d === 'easy' ? '⭐' : d === 'medium' ? '⭐⭐' : '⭐⭐⭐'}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (gameState === 'complete') {
-    const stars = correctAnswers >= 20 ? 3 : correctAnswers >= 10 ? 2 : 1;
-    return (
-      <div className="text-center py-8">
-        <div className="text-6xl mb-4">{NINJA_RANKS[ninjaRank].split(' ')[0]}</div>
-        <h2 className="text-2xl font-bold mb-2">Permainan Selesai!</h2>
-        <p className="text-lg mb-1">Rank: {NINJA_RANKS[ninjaRank]}</p>
-        <p className="text-gray-600 mb-1">Skor: {score}</p>
-        <p className="text-gray-600 mb-1">Benar: {correctAnswers}/{totalChallenges}</p>
-        <p className="text-gray-600 mb-2">Streak Terbaik: {bestStreak} 🔥</p>
-        <div className="flex justify-center gap-2 text-4xl">
-          {stars >= 1 && '⭐'}
-          {stars >= 2 && '⭐'}
-          {stars >= 3 && '⭐'}
-        </div>
-      </div>
-    );
-  }
-
-  if (!currentChallenge) return null;
-
-  return (
-    <div ref={gameAreaRef} className="relative max-w-2xl mx-auto">
-      {/* HUD */}
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-2 bg-white rounded-full px-3 py-1 shadow">
-          <span className="text-xl">⭐</span>
-          <span className="font-bold">{score}</span>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          {streak >= 4 && (
-            <div className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-3 py-1 rounded-full font-bold animate-pulse text-sm">
-              🔥 x{streak} ({comboMultiplier}x)
-            </div>
-          )}
-        </div>
-        
-        <div className="flex items-center gap-1">
-          {Array.from({ length: lives }).map((_, i) => (
-            <span key={i}>❤️</span>
-          ))}
-        </div>
-      </div>
-      
-      {/* Ninja Rank */}
-      <div className="text-center mb-2">
-        <span className="text-sm bg-purple-100 text-purple-700 px-3 py-1 rounded-full">
-          {NINJA_RANKS[ninjaRank]}
-        </span>
-      </div>
-      
-      {/* Timer Bar */}
-      {gameMode !== 'zen' && (
-        <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
-          <div 
-            className={`h-2 rounded-full transition-all duration-1000 ${
-              timeLeft > (currentChallenge.timeLimit / 2) ? 'bg-green-500' :
-              timeLeft > (currentChallenge.timeLimit / 4) ? 'bg-yellow-500' : 'bg-red-500 animate-pulse'
-            }`}
-            style={{ width: `${(timeLeft / currentChallenge.timeLimit) * 100}%` }}
-          />
-        </div>
-      )}
-      
-      {/* Challenge Card */}
-      <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
-        <div className="text-center mb-4">
-          <span className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-full mb-2 inline-block">
-            {currentChallenge.type === 'pattern' && '🔢 Pola Bilangan'}
-            {currentChallenge.type === 'missing' && '🔍 Angka Hilang'}
-            {currentChallenge.type === 'balance' && '⚖️ Timbangan'}
-            {currentChallenge.type === 'comparison' && '📊 Perbandingan'}
-          </span>
-          <h3 className="text-lg font-bold mt-2">{currentChallenge.question}</h3>
-          <span className="text-sm text-gray-500">+{currentChallenge.points * comboMultiplier} poin</span>
-        </div>
-        
-        {/* Visual */}
-        {currentChallenge.type === 'pattern' && renderPattern(currentChallenge.visual)}
-        {currentChallenge.type === 'balance' && renderBalance(currentChallenge.visual)}
-        
-        {/* Comparison Visual */}
-        {currentChallenge.type === 'comparison' && (
-          <div className="flex justify-center items-center gap-4 my-6">
-            <div className="bg-blue-100 rounded-xl p-4 text-xl font-bold">?</div>
-            <div className="text-3xl font-bold">?</div>
-            <div className="bg-red-100 rounded-xl p-4 text-xl font-bold">?</div>
-          </div>
-        )}
-        
-        {/* Answer Options */}
-        <div className="grid grid-cols-2 gap-3">
-          {currentChallenge.type === 'comparison' ? (
-            <>
-              <button
-                onClick={() => handleAnswer(1)}
-                disabled={showFeedback}
-                className={`p-4 rounded-xl text-2xl font-bold transition ${
-                  showFeedback && 1 === currentChallenge.answer
-                    ? 'bg-green-500 text-white'
-                    : showFeedback && selectedAnswer === 1
-                    ? 'bg-red-500 text-white'
-                    : 'bg-gray-100 hover:bg-blue-100'
-                }`}
-              >
-                {'>'}
-              </button>
-              <button
-                onClick={() => handleAnswer(0)}
-                disabled={showFeedback}
-                className={`p-4 rounded-xl text-2xl font-bold transition ${
-                  showFeedback && 0 === currentChallenge.answer
-                    ? 'bg-green-500 text-white'
-                    : showFeedback && selectedAnswer === 0
-                    ? 'bg-red-500 text-white'
-                    : 'bg-gray-100 hover:bg-blue-100'
-                }`}
-              >
-                {'='}
-              </button>
-              <button
-                onClick={() => handleAnswer(-1)}
-                disabled={showFeedback}
-                className={`p-4 rounded-xl text-2xl font-bold transition col-span-2 ${
-                  showFeedback && -1 === currentChallenge.answer
-                    ? 'bg-green-500 text-white'
-                    : showFeedback && selectedAnswer === -1
-                    ? 'bg-red-500 text-white'
-                    : 'bg-gray-100 hover:bg-blue-100'
-                }`}
-              >
-                {'<'}
-              </button>
-            </>
-          ) : (
-            currentChallenge.options.map((option, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleAnswer(option)}
-                disabled={showFeedback}
-                className={`p-4 rounded-xl text-xl font-bold transition transform hover:scale-105 ${
-                  showFeedback && option === currentChallenge.answer
-                    ? 'bg-green-500 text-white scale-110'
-                    : showFeedback && option === selectedAnswer
-                    ? 'bg-red-500 text-white'
-                    : 'bg-gradient-to-br from-blue-400 to-purple-400 text-white hover:shadow-lg'
-                }`}
-              >
-                {option}
-              </button>
-            ))
-          )}
-        </div>
-      </div>
-      
-      {/* Feedback */}
-      {showFeedback && (
-        <div className={`text-center p-4 rounded-xl ${
-          isCorrect ? 'bg-green-100' : 'bg-red-100'
-        }`}>
-          <div className="text-3xl mb-2">
-            {isCorrect ? '🎉' : '😢'}
-          </div>
-          <p className={`text-lg font-bold ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
-            {isCorrect ? `+${currentChallenge.points * comboMultiplier} Poin!` : 'Salah!'}
-          </p>
-          <button
-            onClick={() => setShowExplanation(!showExplanation)}
-            className="text-sm text-blue-500 underline mt-2"
-          >
-            {showExplanation ? 'Sembunyikan' : 'Lihat Penjelasan'}
-          </button>
-          {showExplanation && (
-            <p className="text-sm text-gray-600 mt-2">{currentChallenge.explanation}</p>
-          )}
-        </div>
-      )}
-      
-      {/* Particles */}
-      {particles.map(particle => (
-        <div
-          key={particle.id}
-          className="absolute text-2xl pointer-events-none animate-ping"
-          style={{ left: particle.x, top: particle.y }}
-        >
-          {particle.emoji}
-        </div>
-      ))}
     </div>
   );
+
+  if (step === 'complete') {
+    const stars = correct >= 15 ? 3 : correct >= 10 ? 2 : 1;
+    return (
+      <div style={{ maxWidth: '500px', margin: '0 auto', padding: '24px', textAlign: 'center', background: theme.bg, minHeight: '400px' }}>
+        <div style={{ fontSize: '60px' }}>{RANKS[rank].split(' ')[0]}</div>
+        <h2 style={{ fontSize: '24px', fontWeight: '800', color: theme.heading }}>Permainan Selesai!</h2>
+        <p style={{ color: theme.textSecondary }}>Rank: {RANKS[rank]} | Skor: {score}</p>
+        <p style={{ color: theme.textSecondary }}>Benar: {correct}/{total} | Streak: {bestStreak}x</p>
+        <div style={{ fontSize: '40px' }}>{'⭐'.repeat(stars)}</div>
+        <button onClick={handleComplete} style={{ marginTop: '16px', padding: '12px 24px', borderRadius: '999px', border: 'none', background: '#f59e0b', color: '#fff', fontWeight: '700', cursor: 'pointer' }}>🏆 Klaim!</button>
+      </div>
+    );
+  }
+
+  if (!q) return null;
+
+  return (
+    <div style={{ maxWidth: '500px', margin: '0 auto', padding: '16px', textAlign: 'center', background: theme.bg, minHeight: '400px' }}>
+      {/* HUD */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
+        <span style={{ color: theme.textSecondary }}>⭐ {score}</span>
+        <span style={{ color: '#f59e0b', fontWeight: '700' }}>{streak >= 3 ? `🔥 ${streak}x` : ''}</span>
+        <span style={{ color: theme.textSecondary }}>{Array.from({ length: lives }).map(() => '❤️').join('')}</span>
+      </div>
+      {mode === 'speed' && (
+        <div style={{ width: '100%', height: '6px', background: theme.border, borderRadius: '3px', marginBottom: '12px' }}>
+          <div style={{ width: `${(timeLeft / (diff === 'easy' ? 8 : diff === 'medium' ? 6 : 4)) * 100}%`, height: '100%', background: timeLeft < 3 ? '#ef4444' : '#f59e0b', borderRadius: '3px', transition: 'width 1s' }} />
+        </div>
+      )}
+      <p style={{ fontSize: '12px', color: '#7c3aed', fontWeight: '600', marginBottom: '4px' }}>{RANKS[rank]}</p>
+
+      <div style={{ background: theme.bgCard, borderRadius: '16px', padding: '20px', boxShadow: theme.shadow, marginBottom: '16px' }}>
+        <p style={{ fontSize: '13px', color: '#7c3aed', fontWeight: '600', marginBottom: '4px' }}>
+          {q.type === 'pattern' ? '🔢 Pola' : q.type === 'missing' ? '🔍 Angka Hilang' : q.type === 'balance' ? '⚖️ Timbangan' : '📊 Perbandingan'}
+        </p>
+        <h3 style={{ fontSize: '20px', fontWeight: '700', color: theme.heading }}>{q.text}</h3>
+        {q.visual && q.type === 'pattern' && (
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '12px' }}>
+            {q.visual.map((n, i) => (
+              <div key={i} style={{ width: '40px', height: '40px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: n === -1 ? '#fef3c7' : '#6366f1', color: n === -1 ? '#f59e0b' : '#fff', fontWeight: '700', fontSize: '18px' }}>{n === -1 ? '?' : n}</div>
+            ))}
+          </div>
+        )}
+        {q.visual && q.type === 'balance' && (
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '12px', alignItems: 'flex-end' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ width: '30px', height: `${Math.min(80, q.visual[0] * 3)}px`, background: '#6366f1', borderRadius: '6px 6px 0 0', margin: '0 auto' }} />
+              <p style={{ fontWeight: '700', fontSize: '14px' }}>{q.visual[0]}</p>
+            </div>
+            <span style={{ fontSize: '24px', fontWeight: '900' }}>vs</span>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ width: '30px', height: `${Math.min(80, q.visual[1] * 3)}px`, background: '#ef4444', borderRadius: '6px 6px 0 0', margin: '0 auto' }} />
+              <p style={{ fontWeight: '700', fontSize: '14px' }}>{q.visual[1]}</p>
+            </div>
+          </div>
+        )}
+        <p style={{ fontSize: '12px', color: theme.textMuted, marginTop: '8px' }}>+{q.points * (streak >= 10 ? 4 : streak >= 5 ? 2 : 1)} poin</p>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', maxWidth: '280px', margin: '0 auto' }}>
+        {q.opts.map((opt, i) => (
+          <button key={i} onClick={() => handle(opt)} disabled={feedback} style={{
+            padding: '14px', fontSize: '20px', fontWeight: '700', borderRadius: '12px', border: 'none',
+            background: feedback && opt === q.answer ? '#10b981' : feedback && opt === selected ? '#ef4444' : theme.bgHover,
+            color: (feedback && (opt === q.answer || opt === selected)) ? '#fff' : theme.text,
+            cursor: feedback ? 'default' : 'pointer',
+          }}>{q.type === 'compare' ? (opt === 1 ? 'A > B' : opt === -1 ? 'A < B' : 'A = B') : opt}</button>
+        ))}
+      </div>
+
+      {feedback && (
+        <div style={{ marginTop: '12px', padding: '10px', borderRadius: '10px', background: isCorrect ? '#d1fae5' : '#fee2e2', color: isCorrect ? '#065f46' : '#991b1b', fontWeight: '600', animation: 'pop 0.3s ease-out' }}>
+          {isCorrect ? `🎉 +${q.points * (streak >= 10 ? 4 : streak >= 5 ? 2 : 1)}` : `❌ ${q.hint}`}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function btn(bg: string): React.CSSProperties {
+  return { padding: '12px 20px', borderRadius: '12px', border: 'none', background: bg, color: '#fff', fontWeight: '700', fontSize: '15px', cursor: 'pointer', width: '100%' };
 }

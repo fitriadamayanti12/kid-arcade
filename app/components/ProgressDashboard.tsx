@@ -2,355 +2,265 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase, PlayerStats } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
+import { useThemeStyles } from '@/hooks/useThemeStyles';
 
 interface Props {
   playerName: string;
   onAvatarChange?: (avatar: string) => void;
 }
 
-interface ShopItem {
-  id: number;
-  name: string;
-  price: number;
-  emoji: string;
-  description: string;
-  owned: boolean;
-}
-
-const avatars = [
-  { id: '👦', name: 'Budi', emoji: '👦', color: 'bg-blue-100' },
-  { id: '👧', name: 'Ani', emoji: '👧', color: 'bg-pink-100' },
-  { id: '🐱', name: 'Kitty', emoji: '🐱', color: 'bg-orange-100' },
-  { id: '🦸', name: 'Super Kid', emoji: '🦸', color: 'bg-purple-100' },
-  { id: '🐶', name: 'Doggy', emoji: '🐶', color: 'bg-yellow-100' },
-  { id: '🦄', name: 'Unicorn', emoji: '🦄', color: 'bg-indigo-100' },
-];
-
-const shopItems: ShopItem[] = [
-  { id: 1, name: 'Stiker Bintang', price: 20, emoji: '⭐', description: 'Stiker spesial bintang', owned: false },
-  { id: 2, name: 'Stiker Pelangi', price: 30, emoji: '🌈', description: 'Stiker warna-warni', owned: false },
-  { id: 3, name: 'Tema Dinosaurus', price: 50, emoji: '🦖', description: 'Buka tema dinosaurus', owned: false },
-  { id: 4, name: 'Tema Luar Angkasa', price: 50, emoji: '🚀', description: 'Buka tema luar angkasa', owned: false },
-  { id: 5, name: 'Avatar Mahkota', price: 100, emoji: '👑', description: 'Avatar spesial dengan mahkota', owned: false },
-  { id: 6, name: 'Sound Pack', price: 80, emoji: '🔊', description: 'Suara-suara lucu baru', owned: false },
-];
+const AVATARS = ['👦', '👧', '🐱', '🦸', '🐶', '🦄', '🐼', '🐨', '🦊', '🐸'];
 
 export default function ProgressDashboard({ playerName, onAvatarChange }: Props) {
-  const [stats, setStats] = useState<PlayerStats | null>(null);
-  const [unlockedThemes, setUnlockedThemes] = useState<string[]>(['animals']);
-  const [streak, setStreak] = useState(0);
-  const [dailyRewardClaimed, setDailyRewardClaimed] = useState(false);
-  const [dailyRewardAmount, setDailyRewardAmount] = useState(0);
-  const [showShop, setShowShop] = useState(false);
-  const [showAvatarSelector, setShowAvatarSelector] = useState(false);
-  const [selectedAvatar, setSelectedAvatar] = useState('👦'); // Default laki-laki
-  const [ownedItems, setOwnedItems] = useState<number[]>([]);
+  const theme = useThemeStyles();
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [showAvatars, setShowAvatars] = useState(false);
   const [message, setMessage] = useState('');
-  const [nextRewardIn, setNextRewardIn] = useState('');
 
-  useEffect(() => {
-    loadStats();
-    checkDailyStreak();
-    loadOwnedItems();
-  }, [playerName]);
+  useEffect(() => { loadStats(); }, [playerName]);
 
   const loadStats = async () => {
-    const { data: statsData } = await supabase
-      .from('player_stats')
-      .select('*')
-      .eq('player_name', playerName)
-      .single();
-
-    if (statsData) {
-      setStats(statsData);
-      // Jika avatar kosong atau null, set default ke 👦
-      const avatar = statsData.avatar || '👦';
-      setSelectedAvatar(avatar);
-      if (onAvatarChange) onAvatarChange(avatar);
-    } else {
-      // Jika belum ada data, set default avatar
-      setSelectedAvatar('👦');
-    }
-
-    const { data: themesData } = await supabase
-      .from('unlocked_themes')
-      .select('theme_name')
-      .eq('player_name', playerName);
-
-    if (themesData) setUnlockedThemes(themesData.map(t => t.theme_name));
-  };
-
-  const loadOwnedItems = async () => {
-    const { data } = await supabase
-      .from('player_stats')
-      .select('owned_items')
-      .eq('player_name', playerName)
-      .single();
-
-    if (data?.owned_items) setOwnedItems(data.owned_items);
-  };
-
-  const checkDailyStreak = async () => {
-    const { data } = await supabase
-      .from('player_stats')
-      .select('last_played, streak, total_stars')
-      .eq('player_name', playerName)
-      .single();
-
-    const today = new Date().toDateString();
-    const lastPlayed = data?.last_played ? new Date(data.last_played).toDateString() : null;
-
-    let newStreak = data?.streak || 0;
-    let canClaim = false;
-
-    if (lastPlayed !== today) {
-      canClaim = true;
-      if (lastPlayed === new Date(Date.now() - 86400000).toDateString()) {
-        newStreak += 1;
-      } else if (lastPlayed !== today) {
-        newStreak = 1;
+    try {
+      const { data } = await supabase
+        .from('players')
+        .select('*')
+        .ilike('username', playerName)
+        .single();
+      if (data) {
+        setStats({
+          totalStars: data.total_stars || 0,
+          totalGames: data.total_games_played || 0,
+          badges: data.badges || [],
+          stickers: data.stickers || [],
+          avatar: data.avatar || '👦',
+          streak: data.streak || 0,
+        });
       }
-
-      const rewardBonus = Math.min(10, Math.floor(newStreak / 5)) * 5;
-      const baseReward = 5;
-      setDailyRewardAmount(baseReward + rewardBonus);
+    } catch (e) {
+      console.error('Load stats error:', e);
+    } finally {
+      setLoading(false);
     }
-
-    setStreak(newStreak);
-    setDailyRewardClaimed(!canClaim);
-
-    await supabase
-      .from('player_stats')
-      .update({ streak: newStreak })
-      .eq('player_name', playerName);
-
-    updateNextRewardTime();
   };
 
-  const updateNextRewardTime = () => {
-    const now = new Date();
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
-    const hoursLeft = Math.ceil((tomorrow.getTime() - now.getTime()) / (1000 * 60 * 60));
-    setNextRewardIn(`${hoursLeft} jam lagi`);
-  };
-
-  const claimDailyReward = async () => {
-    if (dailyRewardClaimed) {
-      setMessage('✨ Kamu sudah klaim reward hari ini!');
+  const changeAvatar = async (emoji: string) => {
+    try {
+      await supabase.from('players').update({ avatar: emoji }).ilike('username', playerName);
+      setStats((prev: any) => prev ? { ...prev, avatar: emoji } : null);
+      if (onAvatarChange) onAvatarChange(emoji);
+      setShowAvatars(false);
+      setMessage('Avatar berubah! 🎨');
       setTimeout(() => setMessage(''), 2000);
-      return;
-    }
-
-    const newTotalStars = (stats?.total_stars || 0) + dailyRewardAmount;
-
-    await supabase
-      .from('player_stats')
-      .update({
-        total_stars: newTotalStars,
-        last_played: new Date(),
-        streak: streak
-      })
-      .eq('player_name', playerName);
-
-    setStats(prev => prev ? { ...prev, total_stars: newTotalStars } : null);
-    setDailyRewardClaimed(true);
-    setMessage(`🎉 Selamat! Kamu dapat ${dailyRewardAmount} bintang dari daily reward!`);
-
-    if (streak >= 7 && streak % 7 === 0) {
-      const bonusSticker = ['🏆', '🎖️', '🏅'][Math.floor(Math.random() * 3)];
-      const newStickers = [...(stats?.stickers || []), bonusSticker];
-      await supabase
-        .from('player_stats')
-        .update({ stickers: newStickers })
-        .eq('player_name', playerName);
-      setMessage(`🎉 +${dailyRewardAmount} bintang dan stiker ${bonusSticker}!`);
-    }
-
-    setTimeout(() => setMessage(''), 3000);
+    } catch (e) { console.error('Avatar error:', e); }
   };
 
-  const changeAvatar = async (avatarEmoji: string) => {
-    await supabase
-      .from('player_stats')
-      .update({ avatar: avatarEmoji })
-      .eq('player_name', playerName);
+  // Hitung level & progress bar
+  const totalStars = stats?.totalStars || 0;
+  const level = Math.floor(totalStars / 10) + 1;
+  const nextLevel = level * 10;
+  const progress = ((totalStars % 10) / 10) * 100;
+  const rankEmoji = totalStars >= 100 ? '👑' : totalStars >= 50 ? '💎' : totalStars >= 25 ? '🌟' : totalStars >= 10 ? '⭐' : '🌱';
+  const rankName = totalStars >= 100 ? 'Legenda' : totalStars >= 50 ? 'Master' : totalStars >= 25 ? 'Expert' : totalStars >= 10 ? 'Pro' : 'Pemula';
 
-    setSelectedAvatar(avatarEmoji);
-    if (onAvatarChange) onAvatarChange(avatarEmoji);
-    setShowAvatarSelector(false);
-    setMessage(`🎨 Avatar berubah jadi ${avatarEmoji}!`);
-    setTimeout(() => setMessage(''), 2000);
-  };
-
-  const buyItem = async (item: ShopItem) => {
-    if (ownedItems.includes(item.id)) {
-      setMessage(`Kamu sudah punya ${item.name}!`);
-      setTimeout(() => setMessage(''), 2000);
-      return;
-    }
-
-    if ((stats?.total_stars || 0) >= item.price) {
-      const newTotalStars = (stats?.total_stars || 0) - item.price;
-      const newOwnedItems = [...ownedItems, item.id];
-
-      await supabase
-        .from('player_stats')
-        .update({
-          total_stars: newTotalStars,
-          owned_items: newOwnedItems
-        })
-        .eq('player_name', playerName);
-
-      setStats(prev => prev ? { ...prev, total_stars: newTotalStars } : null);
-      setOwnedItems(newOwnedItems);
-
-      if (item.name.includes('Tema')) {
-        const themeName = item.name.includes('Dinosaurus') ? 'dinosaurs' : 'space';
-        await supabase
-          .from('unlocked_themes')
-          .insert([{
-            player_name: playerName,
-            theme_name: themeName,
-            stars_required: item.price
-          }]);
-        setUnlockedThemes(prev => [...prev, themeName]);
-      }
-
-      setMessage(`🎁 Berhasil membeli ${item.name}!`);
-    } else {
-      setMessage(`💔 Bintang kurang! Butuh ${item.price} bintang.`);
-    }
-
-    setTimeout(() => setMessage(''), 3000);
-  };
-
-  const currentLevel = Math.floor((stats?.total_stars || 0) / 50) + 1;
-  const nextLevelStars = currentLevel * 50;
-  const starsToNextLevel = nextLevelStars - (stats?.total_stars || 0);
-  const progressPercent = Math.min(100, ((stats?.total_stars || 0) / nextLevelStars) * 100);
-
-  // app/components/ProgressDashboard.tsx - Responsive version
+  if (loading) {
+    return (
+      <div style={{ textAlign: 'center', padding: '20px', color: theme.textMuted, fontSize: '13px' }}>
+        Memuat progress...
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-white/90 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 shadow-lg">
-      {/* Header dengan Avatar */}
-      <div className="text-center mb-3 sm:mb-4">
-        <div className="flex justify-center mb-1 sm:mb-2">
-          <button
-            onClick={() => setShowAvatarSelector(!showAvatarSelector)}
-            className="text-4xl sm:text-5xl md:text-6xl hover:scale-110 transition transform"
-          >
-            {selectedAvatar}
-          </button>
-        </div>
-        <h2 className="text-xl sm:text-2xl font-bold text-orange-600 break-words">{playerName}</h2>
-        <p className="text-xs sm:text-sm text-gray-500">Level {currentLevel}</p>
+    <div style={{
+      background: theme.bgCard,
+      borderRadius: '20px',
+      padding: '16px',
+      boxShadow: theme.shadow,
+      border: `1px solid ${theme.border}`,
+      position: 'relative',
+    }}>
+      
+      {/* ========== AVATAR & RANK ========== */}
+      <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+        {/* Avatar dengan border rank */}
+        <button
+          onClick={() => setShowAvatars(!showAvatars)}
+          style={{
+            fontSize: '55px',
+            background: `radial-gradient(circle, ${theme.bgHover} 50%, ${theme.accent || '#7c3aed'} 100%)`,
+            border: '3px solid ' + (theme.accent || '#7c3aed'),
+            borderRadius: '50%',
+            width: '80px',
+            height: '80px',
+            cursor: 'pointer',
+            margin: '0 auto',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'transform 0.2s',
+            position: 'relative',
+          }}
+          onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.08)'}
+          onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          {stats?.avatar || '👦'}
+          {/* Rank badge */}
+          <span style={{
+            position: 'absolute', bottom: '-5px', right: '-5px',
+            fontSize: '20px', background: theme.bgCard, borderRadius: '50%',
+            width: '28px', height: '28px', display: 'flex',
+            alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+          }}>
+            {rankEmoji}
+          </span>
+        </button>
+
+        <h3 style={{ fontSize: '16px', fontWeight: '800', color: theme.heading, margin: '8px 0 2px' }}>
+          {playerName}
+        </h3>
+        <span style={{
+          display: 'inline-block',
+          padding: '3px 10px',
+          borderRadius: '20px',
+          fontSize: '11px',
+          fontWeight: '700',
+          background: totalStars >= 100 ? '#fef3c7' : totalStars >= 50 ? '#ede9fe' : totalStars >= 25 ? '#dbeafe' : '#d1fae5',
+          color: totalStars >= 100 ? '#92400e' : totalStars >= 50 ? '#5b21b6' : totalStars >= 25 ? '#1e40af' : '#065f46',
+        }}>
+          {rankEmoji} {rankName}
+        </span>
       </div>
 
-      {/* Daily Streak Card */}
-      <div className={`rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 mb-3 sm:mb-4 text-center ${dailyRewardClaimed ? 'bg-gray-100' : 'bg-gradient-to-r from-yellow-400 to-orange-400'}`}>
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-          <div>
-            <div className="text-xs sm:text-sm font-bold">🔥 Streak: {streak} hari</div>
-            <div className="text-[10px] sm:text-xs text-gray-600">{nextRewardIn}</div>
+      {/* ========== AVATAR SELECTOR ========== */}
+      {showAvatars && (
+        <div style={{
+          display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center',
+          marginBottom: '12px', padding: '10px', background: theme.bgHover,
+          borderRadius: '14px', animation: 'slide-up 0.3s ease-out',
+        }}>
+          {AVATARS.map(emoji => (
+            <button key={emoji} onClick={() => changeAvatar(emoji)} style={{
+              fontSize: '28px', padding: '6px',
+              background: stats?.avatar === emoji ? '#ede9fe' : 'transparent',
+              border: stats?.avatar === emoji ? '2px solid #7c3aed' : '2px solid transparent',
+              borderRadius: '12px', cursor: 'pointer',
+            }}>{emoji}</button>
+          ))}
+        </div>
+      )}
+
+      {/* ========== LEVEL PROGRESS BAR ========== */}
+      <div style={{ marginBottom: '14px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+          <span style={{ fontSize: '11px', fontWeight: '600', color: theme.textSecondary }}>
+            Level {level}
+          </span>
+          <span style={{ fontSize: '11px', fontWeight: '600', color: theme.textMuted }}>
+            {totalStars} / {nextLevel} ⭐
+          </span>
+        </div>
+        <div style={{
+          width: '100%', height: '10px', background: theme.border,
+          borderRadius: '5px', overflow: 'hidden',
+        }}>
+          <div style={{
+            width: `${progress}%`, height: '100%',
+            background: 'linear-gradient(90deg, #f59e0b, #ef4444, #7c3aed)',
+            borderRadius: '5px',
+            transition: 'width 0.5s ease',
+            boxShadow: '0 0 8px rgba(245,158,11,0.4)',
+          }} />
+        </div>
+        <p style={{ fontSize: '10px', color: theme.textMuted, textAlign: 'center', marginTop: '3px' }}>
+          {nextLevel - totalStars} ⭐ lagi ke Level {level + 1}!
+        </p>
+      </div>
+
+      {/* ========== STATS CARDS ========== */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px', marginBottom: '14px' }}>
+        <div style={{ background: '#fef3c7', borderRadius: '12px', padding: '10px 6px', textAlign: 'center' }}>
+          <div style={{ fontSize: '24px', marginBottom: '2px' }}>⭐</div>
+          <p style={{ fontSize: '18px', fontWeight: '900', color: '#f59e0b', margin: 0 }}>{totalStars}</p>
+          <p style={{ fontSize: '9px', color: '#92400e', margin: 0 }}>Bintang</p>
+        </div>
+        <div style={{ background: '#eff6ff', borderRadius: '12px', padding: '10px 6px', textAlign: 'center' }}>
+          <div style={{ fontSize: '24px', marginBottom: '2px' }}>🎮</div>
+          <p style={{ fontSize: '18px', fontWeight: '900', color: '#3b82f6', margin: 0 }}>{stats?.totalGames || 0}</p>
+          <p style={{ fontSize: '9px', color: '#1e40af', margin: 0 }}>Game</p>
+        </div>
+        <div style={{ background: '#fce7f3', borderRadius: '12px', padding: '10px 6px', textAlign: 'center' }}>
+          <div style={{ fontSize: '24px', marginBottom: '2px' }}>🔥</div>
+          <p style={{ fontSize: '18px', fontWeight: '900', color: '#ec4899', margin: 0 }}>{stats?.streak || 0}</p>
+          <p style={{ fontSize: '9px', color: '#9d174d', margin: 0 }}>Streak</p>
+        </div>
+      </div>
+
+      {/* ========== BADGES ========== */}
+      {stats?.badges?.length > 0 && (
+        <div style={{ marginBottom: '12px' }}>
+          <p style={{ fontSize: '12px', fontWeight: '700', color: theme.heading, marginBottom: '8px' }}>
+            🏅 Badge ({stats.badges.length})
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+            {stats.badges.map((b: string, i: number) => (
+              <span key={i} style={{
+                padding: '5px 10px', borderRadius: '20px', fontSize: '10px',
+                background: 'linear-gradient(135deg, #ede9fe, #fce7f3)',
+                color: '#5b21b6', fontWeight: '600',
+                border: '1px solid #c4b5fd',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+              }}>{b}</span>
+            ))}
           </div>
-          <button
-            onClick={claimDailyReward}
-            disabled={dailyRewardClaimed}
-            className={`px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-bold transition ${dailyRewardClaimed
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-white text-orange-600 hover:scale-105'
-              }`}
-          >
-            {dailyRewardClaimed ? '✅ Sudah Klaim' : `🎁 Klaim ${dailyRewardAmount} ⭐`}
-          </button>
         </div>
-      </div>
+      )}
 
-      {/* Progress Bar */}
-      <div className="mb-3 sm:mb-4">
-        <div className="flex justify-between text-[10px] sm:text-xs text-gray-600 mb-1">
-          <span>Progress ke Level {currentLevel + 1}</span>
-          <span>{stats?.total_stars || 0} / {nextLevelStars} ⭐</span>
+      {/* ========== STICKERS ========== */}
+      {stats?.stickers?.length > 0 && (
+        <div style={{ marginBottom: '8px' }}>
+          <p style={{ fontSize: '12px', fontWeight: '700', color: theme.heading, marginBottom: '8px' }}>
+            🌟 Stiker ({stats.stickers.length})
+          </p>
+          <div style={{ 
+            display: 'flex', flexWrap: 'wrap', gap: '6px', fontSize: '24px',
+            background: theme.bgHover, borderRadius: '12px', padding: '8px',
+            minHeight: '40px',
+          }}>
+            {stats.stickers.map((s: string, i: number) => (
+              <span key={i} style={{ animation: `float ${1.5 + i * 0.2}s ease-in-out infinite` }}>{s}</span>
+            ))}
+          </div>
         </div>
-        <div className="bg-gray-200 rounded-full h-1.5 sm:h-2 overflow-hidden">
-          <div
-            className="bg-gradient-to-r from-yellow-400 to-orange-500 h-full transition-all duration-500"
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
-      </div>
+      )}
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6">
-        <div className="text-center bg-yellow-100 rounded-lg sm:rounded-xl p-2 sm:p-3">
-          <div className="text-2xl sm:text-3xl">⭐</div>
-          <div className="text-xl sm:text-2xl font-bold">{stats?.total_stars || 0}</div>
-          <div className="text-[10px] sm:text-xs">Total Bintang</div>
+      {/* ========== EMPTY STATE ========== */}
+      {!stats?.badges?.length && !stats?.stickers?.length && (
+        <div style={{
+          textAlign: 'center', padding: '16px',
+          background: theme.bgHover, borderRadius: '12px',
+          marginTop: '8px',
+        }}>
+          <p style={{ fontSize: '30px', margin: '0 0 4px' }}>🎯</p>
+          <p style={{ fontSize: '12px', color: theme.textSecondary, margin: 0, fontWeight: '600' }}>
+            Mainkan game & dapatkan badge!
+          </p>
+          <p style={{ fontSize: '10px', color: theme.textMuted, margin: '2px 0 0' }}>
+            Setiap game selesai = ⭐ + 🏅
+          </p>
         </div>
-        <div className="text-center bg-green-100 rounded-lg sm:rounded-xl p-2 sm:p-3">
-          <div className="text-2xl sm:text-3xl">🎮</div>
-          <div className="text-xl sm:text-2xl font-bold">{stats?.total_puzzles_completed || 0}</div>
-          <div className="text-[10px] sm:text-xs">Game Selesai</div>
-        </div>
-      </div>
+      )}
 
-      {/* Badges */}
-      <div className="mb-3 sm:mb-4">
-        <p className="font-bold text-sm sm:text-base mb-1 sm:mb-2">🏅 Lencana:</p>
-        <div className="flex flex-wrap gap-1 sm:gap-2">
-          {(stats?.badges || []).map((badge, i) => (
-            <span key={i} className="bg-purple-200 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs flex items-center gap-0.5 sm:gap-1">
-              <span>🏅</span> {badge}
-            </span>
-          ))}
-          {(stats?.badges || []).length === 0 && (
-            <span className="text-gray-500 text-[10px] sm:text-xs">Belum ada lencana. Ayo main!</span>
-          )}
-        </div>
-      </div>
-
-      {/* Stickers */}
-      <div className="mb-3 sm:mb-4">
-        <p className="font-bold text-sm sm:text-base mb-1 sm:mb-2">📌 Stiker Koleksi ({stats?.stickers?.length || 0}/20):</p>
-        <div className="flex flex-wrap gap-1 sm:gap-2 max-h-20 sm:max-h-24 overflow-y-auto">
-          {(stats?.stickers || []).map((sticker, i) => (
-            <span key={i} className="text-xl sm:text-2xl hover:scale-125 transition cursor-pointer" title={`Stiker ${i + 1}`}>
-              {sticker}
-            </span>
-          ))}
-          {(stats?.stickers || []).length === 0 && (
-            <span className="text-gray-500 text-[10px] sm:text-xs">Main setiap hari dapat stiker!</span>
-          )}
-        </div>
-      </div>
-
-      {/* Unlocked Themes */}
-      <div className="mb-3 sm:mb-4 pt-3 sm:pt-4 border-t">
-        <p className="font-bold text-sm sm:text-base mb-1 sm:mb-2">🔓 Tema Terbuka:</p>
-        <div className="flex flex-wrap gap-1 sm:gap-2">
-          {unlockedThemes.map(theme => (
-            <span key={theme} className="bg-blue-200 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs capitalize">
-              {theme === 'animals' ? '🐘 Hewan' : theme === 'dinosaurs' ? '🦖 Dinosaurus' : '🚀 Luar Angkasa'} ✓
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* Shop Button */}
-      <button
-        onClick={() => setShowShop(!showShop)}
-        className="w-full bg-gradient-to-r from-green-400 to-teal-400 text-white py-1.5 sm:py-2 rounded-full font-bold text-sm sm:text-base mb-2 hover:scale-105 transition"
-      >
-        🛒 Toko Bintang ({stats?.total_stars || 0} ⭐)
-      </button>
-
-      {/* Message Toast */}
+      {/* ========== TOAST ========== */}
       {message && (
-        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-2 sm:px-3 py-1 sm:py-2 rounded-full text-[10px] sm:text-xs z-50 animate-bounce whitespace-nowrap">
+        <div style={{
+          position: 'fixed', bottom: '20px', left: '50%', transform: 'translateX(-50%)',
+          background: '#1e293b', color: '#fff', padding: '8px 16px',
+          borderRadius: '20px', fontSize: '12px', zIndex: 100,
+          animation: 'slide-up 0.3s ease-out',
+        }}>
           {message}
         </div>
       )}

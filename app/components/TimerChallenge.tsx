@@ -3,152 +3,161 @@
 
 import { useState, useEffect } from 'react';
 import { useSoundEffect } from '@/hooks/useSoundEffect';
+import { useThemeStyles } from '@/hooks/useThemeStyles';
 
 interface TimerChallengeProps {
-  onComplete: (stars: number, timeLeft: number) => void;
+  onComplete: (stars: number, extra?: any) => void;
 }
 
-const pieces = [
-  { id: 'star', name: '🌟', image: '⭐', correctSlot: 'slot1' },
-  { id: 'moon', name: '🌙', image: '🌙', correctSlot: 'slot2' },
-  { id: 'sun', name: '☀️', image: '☀️', correctSlot: 'slot3' },
-];
-
 export default function TimerChallenge({ onComplete }: TimerChallengeProps) {
+  const theme = useThemeStyles();
   const [timeLeft, setTimeLeft] = useState(30);
-  const [matched, setMatched] = useState<Record<string, string>>({});
+  const [score, setScore] = useState(0);
+  const [total, setTotal] = useState(0);
   const [isActive, setIsActive] = useState(true);
+  const [q, setQ] = useState({ a: 0, b: 0, op: '+', answer: 0, opts: [] as number[] });
+  const [selected, setSelected] = useState<number | null>(null);
+  const [correct, setCorrect] = useState(false);
+  const [streak, setStreak] = useState(0);
   const { playSound } = useSoundEffect();
 
+  // Timer
   useEffect(() => {
-    if (timeLeft <= 0 && isActive) {
+    if (!isActive) return;
+    if (timeLeft <= 0) {
       setIsActive(false);
-      playSound('wrong');
-      onComplete(0, 0);
+      const stars = score >= 15 ? 3 : score >= 10 ? 2 : 1;
+      onComplete(stars, { score, total, streak });
+      return;
     }
-    if (timeLeft > 0 && isActive) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [timeLeft, isActive, playSound, onComplete]);
+    const timer = setTimeout(() => setTimeLeft(t => t - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [timeLeft, isActive]);
 
-  useEffect(() => {
-    if (Object.keys(matched).length === 3 && isActive) {
-      let stars = 1;
-      if (timeLeft >= 20) stars = 3;
-      else if (timeLeft >= 10) stars = 2;
-      setIsActive(false);
+  const generate = () => {
+    const ops = ['+', '-', '×'];
+    const op = ops[Math.floor(Math.random() * ops.length)];
+    let a: number, b: number, answer: number;
+
+    switch (op) {
+      case '+': a = Math.floor(Math.random() * 30) + 5; b = Math.floor(Math.random() * 30) + 5; answer = a + b; break;
+      case '-': a = Math.floor(Math.random() * 40) + 10; b = Math.floor(Math.random() * a) + 1; answer = a - b; break;
+      case '×': a = Math.floor(Math.random() * 9) + 2; b = Math.floor(Math.random() * 9) + 2; answer = a * b; break;
+      default: a = 0; b = 0; answer = 0;
+    }
+
+    const wrongs = new Set<number>();
+    while (wrongs.size < 3) {
+      const w = answer + (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 8) + 1);
+      if (w !== answer && w >= 0) wrongs.add(w);
+    }
+    setQ({ a, b, op, answer, opts: [...wrongs, answer].sort(() => Math.random() - 0.5) });
+  };
+
+  useEffect(() => { generate(); }, []);
+
+  const handleAnswer = (ans: number) => {
+    if (!isActive || selected !== null) return;
+    setSelected(ans);
+    const ok = ans === q.answer;
+    setCorrect(ok);
+    setTotal(t => t + 1);
+    if (ok) { 
+      setScore(s => s + 1); 
+      setStreak(s => s + 1);
+      setTimeLeft(t => t + 3); // Bonus waktu!
       playSound('win');
-      onComplete(stars, timeLeft);
-    }
-  }, [matched, isActive, timeLeft, playSound, onComplete]);
-
-  useEffect(() => {
-    if (timeLeft === 10 && isActive) {
-      playSound('timer');
-    }
-  }, [timeLeft, isActive, playSound]);
-
-  const handleDragStart = (e: React.DragEvent, pieceId: string) => {
-    if (!isActive) return;
-    e.dataTransfer.setData('text/plain', pieceId);
-    e.dataTransfer.effectAllowed = 'move';
-    playSound('click');
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (e: React.DragEvent, slotId: string, correctPieceId: string) => {
-    e.preventDefault();
-    if (!isActive) return;
-    if (matched[slotId]) return;
-
-    const pieceId = e.dataTransfer.getData('text/plain');
-    if (pieceId === correctPieceId) {
-      setMatched(prev => ({ ...prev, [slotId]: pieceId }));
-      playSound('correct');
     } else {
-      playSound('wrong');
+      setStreak(0);
+      setTimeLeft(t => Math.max(0, t - 2)); // Penalti!
+      playSound('click');
     }
+    setTimeout(() => {
+      if (isActive) { generate(); setSelected(null); }
+    }, 500);
   };
 
   return (
-    <div className="p-3 sm:p-4 md:p-6">
-      {/* Timer Display */}
-      <div className="text-center mb-4 sm:mb-6">
-        <div className={`text-4xl sm:text-5xl md:text-6xl font-bold ${timeLeft <= 10 ? 'text-red-500 animate-pulse' : 'text-blue-600'}`}>
+    <div style={{ padding: '16px', maxWidth: '500px', margin: '0 auto', textAlign: 'center' }}>
+      {/* Timer */}
+      <div style={{ marginBottom: '16px' }}>
+        <div style={{
+          fontSize: '48px', fontWeight: '900',
+          color: timeLeft <= 10 ? '#ef4444' : timeLeft <= 20 ? '#f59e0b' : '#3b82f6',
+          animation: timeLeft <= 10 ? 'pulse 1s ease-in-out infinite' : 'none',
+        }}>
           ⏱️ {timeLeft}s
         </div>
-        <div className="text-xs sm:text-sm text-gray-600 mt-1 sm:mt-2">
-          Selesaikan sebelum waktu habis!
+        <div style={{ 
+          width: '100%', height: '6px', background: theme.border, borderRadius: '3px',
+          marginTop: '8px', overflow: 'hidden',
+        }}>
+          <div style={{
+            width: `${(timeLeft / 30) * 100}%`, height: '100%',
+            background: timeLeft <= 10 ? '#ef4444' : timeLeft <= 20 ? '#f59e0b' : '#3b82f6',
+            borderRadius: '3px', transition: 'width 1s',
+          }} />
         </div>
       </div>
 
-      {/* Game Area - Responsive wrapping */}
-      <div className="flex flex-col md:flex-row gap-4 md:gap-6 justify-center items-center">
-        {/* Draggable Pieces */}
-        <div className="w-full md:w-auto">
-          <h3 className="font-bold text-center text-sm sm:text-base mb-2 sm:mb-3">✨ Seret ke sini:</h3>
-          <div className="flex flex-row flex-wrap gap-3 sm:gap-4 justify-center">
-            {pieces.map(piece => {
-              const isUsed = Object.values(matched).includes(piece.id);
-              if (isUsed) return null;
-              return (
-                <div
-                  key={piece.id}
-                  draggable={isActive}
-                  onDragStart={(e) => handleDragStart(e, piece.id)}
-                  className="bg-orange-200 p-3 sm:p-4 rounded-xl sm:rounded-2xl text-3xl sm:text-4xl md:text-5xl cursor-grab active:cursor-grabbing hover:bg-orange-300 transition text-center hover:scale-105"
-                >
-                  {piece.image}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Target Slots */}
-        <div className="w-full md:w-auto">
-          <h3 className="font-bold text-center text-sm sm:text-base mb-2 sm:mb-3">🎯 Taruh di sini:</h3>
-          <div className="flex flex-row flex-wrap gap-3 sm:gap-4 justify-center">
-            {pieces.map((piece, idx) => {
-              const slotId = `slot${idx + 1}`;
-              const isFilled = matched[slotId];
-              return (
-                <div
-                  key={idx}
-                  onDragOver={handleDragOver}
-                  onDrop={(e) => handleDrop(e, slotId, piece.id)}
-                  className={`w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-xl sm:rounded-2xl border-4 flex items-center justify-center text-2xl sm:text-3xl md:text-4xl transition ${
-                    isFilled
-                      ? 'bg-green-300 border-green-600'
-                      : 'bg-gray-100 border-dashed border-gray-400 hover:bg-gray-200'
-                  }`}
-                >
-                  {isFilled ? '✓' : '?'}
-                </div>
-              );
-            })}
-          </div>
-        </div>
+      {/* Stats */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontSize: '14px' }}>
+        <span style={{ color: theme.textSecondary }}>Skor: <strong style={{ color: '#10b981' }}>{score}</strong></span>
+        <span style={{ color: theme.textSecondary }}>Total: {total}</span>
+        {streak >= 3 && <span style={{ color: '#f59e0b', fontWeight: '700' }}>🔥 {streak}x</span>}
       </div>
 
-      {/* Instructions */}
-      <div className="text-center mt-4 sm:mt-6 text-xs sm:text-sm text-gray-500">
-        💡 Seret gambar ke kotak target yang sesuai!
-      </div>
-
-      {/* Progress Bar */}
-      <div className="mt-4 sm:mt-6">
-        <div className="bg-gray-200 rounded-full h-1.5 sm:h-2 overflow-hidden">
-          <div 
-            className="bg-gradient-to-r from-red-500 to-orange-500 h-full transition-all duration-1000"
-            style={{ width: `${((30 - timeLeft) / 30) * 100}%` }}
-          />
+      {/* Question */}
+      {isActive && (
+        <div style={{ background: theme.bgCard, borderRadius: '20px', padding: '24px', boxShadow: theme.shadow, marginBottom: '16px' }}>
+          <h3 style={{ fontSize: '32px', fontWeight: '900', color: theme.heading }}>
+            {q.a} {q.op} {q.b} = ?
+          </h3>
         </div>
-      </div>
+      )}
+
+      {/* Options */}
+      {isActive && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', maxWidth: '280px', margin: '0 auto' }}>
+          {q.opts.map((opt, i) => (
+            <button key={i} onClick={() => handleAnswer(opt)} disabled={selected !== null}
+              style={{
+                padding: '14px', fontSize: '22px', fontWeight: '700', borderRadius: '14px', border: 'none',
+                background: selected === opt ? (correct ? '#10b981' : '#ef4444') : theme.bgHover,
+                color: selected === opt ? '#fff' : theme.text,
+                cursor: selected !== null ? 'default' : 'pointer',
+              }}
+            >{opt}</button>
+          ))}
+        </div>
+      )}
+
+      {/* Feedback */}
+      {selected !== null && (
+        <div style={{
+          marginTop: '12px', padding: '10px', borderRadius: '10px',
+          background: correct ? '#d1fae5' : '#fee2e2',
+          color: correct ? '#065f46' : '#991b1b',
+          fontWeight: '700', fontSize: '16px',
+          animation: 'pop 0.3s ease-out',
+        }}>
+          {correct ? `🎉 +3 detik! ${q.a}${q.op}${q.b}=${q.answer}` : `❌ -2 detik! ${q.answer}`}
+        </div>
+      )}
+
+      {/* Game Over */}
+      {!isActive && (
+        <div style={{ background: theme.bgCard, borderRadius: '20px', padding: '24px', boxShadow: theme.shadow }}>
+          <div style={{ fontSize: '50px', marginBottom: '8px' }}>⏰</div>
+          <h3 style={{ fontSize: '20px', fontWeight: '800', color: theme.heading }}>Waktu Habis!</h3>
+          <p style={{ fontSize: '16px', color: theme.textSecondary }}>
+            Skor: <strong>{score}</strong> | Total: {total}
+          </p>
+          <p style={{ fontSize: '14px', color: theme.textMuted }}>
+            ⭐ {score >= 15 ? '★★★' : score >= 10 ? '★★' : '★'}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

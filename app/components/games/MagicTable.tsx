@@ -1,704 +1,279 @@
 // app/components/games/MagicTable.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useThemeStyles } from '@/hooks/useThemeStyles';
 
 interface MagicTableProps {
   onComplete: (stars: number, extra?: any) => void;
 }
 
+const TABLE_SONGS: Record<number, string> = {
+  2: '🎵 2,4,6,8,10... 12,14,16,18,20!',
+  3: '🎵 3,6,9,12,15... 18,21,24,27,30!',
+  4: '🎵 4,8,12,16,20... 24,28,32,36,40!',
+  5: '🎵 5,10,15,20,25... 30,35,40,45,50!',
+  6: '🎵 6,12,18,24,30... 36,42,48,54,60!',
+  7: '🎵 7,14,21,28,35... 42,49,56,63,70!',
+  8: '🎵 8,16,24,32,40... 48,56,64,72,80!',
+  9: '🎵 9,18,27,36,45... 54,63,72,81,90!',
+  10: '🎵 10,20,30,40,50... 60,70,80,90,100!',
+};
+
 export default function MagicTable({ onComplete }: MagicTableProps) {
-  const [step, setStep] = useState<'intro' | 'learn' | 'practice' | 'quiz' | 'complete'>('intro');
-  const [currentTable, setCurrentTable] = useState(2);
-  const [currentMultiplier, setCurrentMultiplier] = useState(1);
-  const [showAnswer, setShowAnswer] = useState(false);
-  const [practiceAnswer, setPracticeAnswer] = useState('');
+  const theme = useThemeStyles();
+  const [step, setStep] = useState<'menu' | 'visual' | 'practice' | 'quiz' | 'complete'>('menu');
+  const [table, setTable] = useState(2);
+  const [mult, setMult] = useState(1);
+  const [answer, setAnswer] = useState('');
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [score, setScore] = useState(0);
-  const [totalQuestions, setTotalQuestions] = useState(0);
-  const [stars, setStars] = useState(0);
-  const [learnedTables, setLearnedTables] = useState<number[]>([]);
-  const [quizQuestions, setQuizQuestions] = useState<{ q: string; a: number }[]>([]);
-  const [quizIndex, setQuizIndex] = useState(0);
-  const [quizAnswer, setQuizAnswer] = useState('');
+  const [total, setTotal] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [hintLevel, setHintLevel] = useState(0);
+  const [quizQ, setQuizQ] = useState<{ a: number; b: number }[]>([]);
+  const [quizIdx, setQuizIdx] = useState(0);
+  const [mode, setMode] = useState<'learn' | 'speed'>('learn');
 
-  // Generate quiz questions
-  const generateQuiz = (table: number) => {
-    const questions = [];
-    const multipliers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-    // Shuffle
-    for (let i = multipliers.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [multipliers[i], multipliers[j]] = [multipliers[j], multipliers[i]];
-    }
-    
-    for (const m of multipliers) {
-      questions.push({
-        q: `${table} × ${m} = ?`,
-        a: table * m,
-      });
-    }
-    return questions.slice(0, 5);
-  };
+  const emojis = ['🌟', '⭐', '💛', '✨', '🔸', '💎', '🎯', '🔥', '🌈', '🦄'];
 
-  // Cara visual: Menampilkan perkalian sebagai baris × kolom dengan emoji
-  const renderVisualMultiplication = (table: number, multiplier: number) => {
-    const rows = Math.min(table, 5); // Max 5 rows for display
-    const cols = Math.min(multiplier, 10); // Max 10 cols
-    
-    const displayRows = table <= 5 ? table : 5;
-    const displayCols = multiplier <= 10 ? multiplier : 10;
-    
-    const emojis = ['🌟', '⭐', '💛', '✨', '🔸'];
-    
-    return (
-      <div style={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center',
-        gap: '4px',
-        padding: '16px',
-        background: '#FFFBEB',
-        borderRadius: '16px',
-        marginBottom: '16px',
-      }}>
-        <div style={{ fontSize: '14px', color: '#92400E', marginBottom: '8px', fontWeight: 'bold' }}>
-          {table} × {multiplier} = {table} baris × {multiplier} kolom
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-          {Array.from({ length: displayRows }).map((_, row) => (
-            <div key={row} style={{ display: 'flex', gap: '3px' }}>
-              {Array.from({ length: displayCols }).map((_, col) => (
-                <div key={col} style={{
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '6px',
-                  background: `hsl(${(row * displayCols + col) * 30}, 70%, 60%)`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '16px',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                }}>
-                  {emojis[(row * displayCols + col) % emojis.length]}
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-        
-        {/* Counter visual */}
-        <div style={{ 
-          marginTop: '12px', 
-          padding: '8px 16px', 
-          background: '#FEF3C7', 
-          borderRadius: '20px',
-          fontSize: '14px',
-          color: '#92400E',
-        }}>
-          Hitung semua: {Array.from({ length: Math.min(displayRows * displayCols, table * multiplier) }).map((_, i) => '⭐').join(' ')}
-        </div>
-        
-        <div style={{ 
-          marginTop: '8px',
-          fontSize: '24px',
-          fontWeight: 'bold',
-          color: '#7C3AED',
-        }}>
-          {table} × {multiplier} = <span style={{ 
-            background: '#7C3AED', 
-            color: 'white', 
-            padding: '4px 16px', 
-            borderRadius: '12px',
-            display: 'inline-block',
-            minWidth: '40px',
-          }}>{table * multiplier}</span>
-        </div>
-      </div>
-    );
-  };
-
-  // Render pola perkalian (semua hasil dalam 1 tampilan)
-  const renderTablePattern = (table: number) => {
-    return (
-      <div style={{ 
-        background: 'white', 
-        borderRadius: '16px', 
-        padding: '16px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-        marginBottom: '16px',
-      }}>
-        <h3 style={{ textAlign: 'center', color: '#7C3AED', marginBottom: '12px' }}>
-          📊 Tabel Perkalian {table}
-        </h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          {Array.from({ length: 10 }).map((_, i) => {
-            const multiplier = i + 1;
-            const result = table * multiplier;
-            const isHighlighted = currentMultiplier === multiplier;
-            
-            return (
-              <div 
-                key={i}
-                onClick={() => {
-                  setCurrentMultiplier(multiplier);
-                  setShowAnswer(true);
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '8px 12px',
-                  borderRadius: '10px',
-                  background: isHighlighted ? '#EDE9FE' : 'transparent',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  border: isHighlighted ? '2px solid #7C3AED' : '1px solid #E5E7EB',
-                }}
-              >
-                <span style={{ fontWeight: 'bold', width: '80px' }}>
-                  {table} × {multiplier}
-                </span>
-                <span style={{ flex: 1, textAlign: 'center' }}>=</span>
-                <span style={{ 
-                  fontWeight: 'bold',
-                  fontSize: '18px',
-                  color: isHighlighted ? '#7C3AED' : '#374151',
-                  background: isHighlighted ? '#DDD6FE' : 'transparent',
-                  padding: '4px 12px',
-                  borderRadius: '8px',
-                  minWidth: '40px',
-                  textAlign: 'center',
-                }}>
-                  {result}
-                </span>
-                {/* Progress dots */}
-                <div style={{ marginLeft: '8px', display: 'flex', gap: '2px' }}>
-                  {Array.from({ length: multiplier }).map((_, j) => (
-                    <div key={j} style={{
-                      width: '6px',
-                      height: '6px',
-                      borderRadius: '50%',
-                      background: j < multiplier ? '#7C3AED' : '#E5E7EB',
-                    }} />
-                  ))}
-                </div>
+  // Visual: Kotak perkalian
+  const renderGrid = (t: number, m: number, showResult = true) => (
+    <div style={{ marginBottom: '12px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', alignItems: 'center' }}>
+        {Array.from({ length: Math.min(t, 6) }).map((_, row) => (
+          <div key={row} style={{ display: 'flex', gap: '3px' }}>
+            {Array.from({ length: m }).map((_, col) => (
+              <div key={col} style={{
+                width: '32px', height: '32px', borderRadius: '8px',
+                background: `hsl(${(row * m + col) * 360 / (t * m)}, 70%, ${60 + (row % 2) * 15}%)`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '14px', transition: 'all 0.3s',
+                transform: `scale(${1 + (row * 0.02)})`,
+              }}>
+                {emojis[(row * m + col) % emojis.length]}
               </div>
-            );
-          })}
-        </div>
-        
-        {/* Pattern hint */}
-        <div style={{ 
-          marginTop: '12px', 
-          padding: '10px', 
-          background: '#F0FDF4', 
-          borderRadius: '10px',
-          fontSize: '13px',
-          color: '#065F46',
-        }}>
-          💡 <strong>Pola:</strong> {table === 1 ? 'Semua angka tetap sama' :
-            table === 2 ? 'Semua angka GENAP (loncat 2)' :
-            table === 5 ? 'Akhiran selalu 0 atau 5' :
-            table === 9 ? 'Jumlah digit selalu 9 (9,18,27,36...)' :
-            table === 10 ? 'Tambah 0 di belakang' :
-            `Tambah ${table} setiap langkah`}
-        </div>
+            ))}
+          </div>
+        ))}
+      </div>
+      <p style={{ fontSize: '12px', color: theme.textMuted, marginTop: '6px' }}>
+        {t} baris × {m} kolom = {t * m} total
+      </p>
+    </div>
+  );
+
+  // Finger counting method
+  const renderFingerMethod = (t: number, m: number) => {
+    if (t > 5 || m > 5) return null;
+    const hands = Math.ceil(t / 5);
+    return (
+      <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginBottom: '8px' }}>
+        {Array.from({ length: hands }).map((_, h) => (
+          <div key={h} style={{ display: 'flex', gap: '2px' }}>
+            {Array.from({ length: Math.min(5, t - h * 5) }).map((_, f) => (
+              <span key={f} style={{ fontSize: '24px' }}>🖐️</span>
+            ))}
+          </div>
+        ))}
+        <span style={{ fontSize: '20px', alignSelf: 'center', fontWeight: '900', color: theme.heading }}>× {m}</span>
       </div>
     );
   };
 
-  const handlePracticeSubmit = () => {
-    const answer = parseInt(practiceAnswer);
-    const correct = answer === currentTable * currentMultiplier;
-    
-    if (correct) {
-      setFeedback('correct');
-      setScore(s => s + 1);
-      
-      setTimeout(() => {
-        if (currentMultiplier < 10) {
-          setCurrentMultiplier(m => m + 1);
-          setPracticeAnswer('');
-          setFeedback(null);
-          setShowAnswer(false);
-        } else {
-          // Table mastered!
-          setLearnedTables(prev => [...prev, currentTable]);
-          setStep('quiz');
-          setQuizQuestions(generateQuiz(currentTable));
-          setQuizIndex(0);
-          setQuizAnswer('');
-          setFeedback(null);
-        }
-      }, 800);
-    } else {
-      setFeedback('wrong');
-      setTimeout(() => {
-        setFeedback(null);
-        setPracticeAnswer('');
-      }, 1000);
-    }
-    setTotalQuestions(t => t + 1);
+  // Hints progressive
+  const getHint = (t: number, m: number, level: number): string => {
+    if (level === 0) return '';
+    if (level === 1) return `💡 ${t} × ${m} = ${t} + ${t} + ... (${m} kali)`;
+    if (level === 2) return `💡 ${t} × ${m} = ${t * (m - 1)} + ${t} = ${t * (m - 1) + t}`;
+    if (level === 3) return `💡 ${t} × ${m} = ${m} × ${t} = ${m * t}`;
+    return `✅ ${t} × ${m} = ${t * m}`;
   };
 
-  const handleQuizSubmit = () => {
-    const answer = parseInt(quizAnswer);
-    const correct = answer === quizQuestions[quizIndex]?.a;
-    
-    if (correct) {
-      setScore(s => s + 2);
-      setFeedback('correct');
-      
-      setTimeout(() => {
-        if (quizIndex < quizQuestions.length - 1) {
-          setQuizIndex(i => i + 1);
-          setQuizAnswer('');
-          setFeedback(null);
-        } else {
-          // Quiz complete!
-          setStars(s => s + 1);
-          if (currentTable < 10) {
-            setCurrentTable(t => t + 1);
-            setCurrentMultiplier(1);
-            setStep('learn');
-            setShowAnswer(false);
-            setFeedback(null);
-          } else {
-            setStep('complete');
-          }
-        }
-      }, 600);
-    } else {
-      setFeedback('wrong');
-      setTimeout(() => {
-        setFeedback(null);
-        setQuizAnswer('');
-      }, 1000);
-    }
+  const generateQuiz = () => {
+    const qs: { a: number; b: number }[] = [];
+    const multipliers = [1,2,3,4,5,6,7,8,9,10].sort(() => Math.random() - 0.5);
+    for (const m of multipliers) qs.push({ a: table, b: m });
+    setQuizQ(qs); setQuizIdx(0);
+  };
+
+  const handlePractice = () => {
+    const ans = parseInt(answer);
+    if (isNaN(ans)) return;
+    const ok = ans === table * mult;
+    setFeedback(ok ? 'correct' : 'wrong');
+    setTotal(t => t + 1);
+    if (ok) { setScore(s => s + 1); setStreak(s => s + 1); }
+    else { setStreak(0); setHintLevel(h => Math.min(h + 1, 3)); }
+    setTimeout(() => {
+      if (mult < 10) { setMult(m => m + 1); setAnswer(''); setFeedback(null); }
+      else { generateQuiz(); setStep('quiz'); setQuizIdx(0); setAnswer(''); setFeedback(null); }
+    }, 600);
+  };
+
+  const handleQuiz = () => {
+    const ans = parseInt(answer);
+    if (isNaN(ans) || !quizQ[quizIdx]) return;
+    const ok = ans === quizQ[quizIdx].a * quizQ[quizIdx].b;
+    setFeedback(ok ? 'correct' : 'wrong');
+    if (ok) { setScore(s => s + 3); setStreak(s => s + 1); }
+    else setStreak(0);
+    setTimeout(() => {
+      if (quizIdx < 9) { setQuizIdx(i => i + 1); setAnswer(''); setFeedback(null); }
+      else if (table < 10) { setTable(t => t + 1); setMult(1); setStep('visual'); setAnswer(''); setFeedback(null); setHintLevel(0); }
+      else setStep('complete');
+    }, 600);
   };
 
   const handleComplete = () => {
-    onComplete(stars >= 3 ? 3 : stars >= 1 ? 2 : 1, { 
-      score, 
-      tablesLearned: learnedTables.length,
-      stars 
-    });
+    const stars = score >= 80 ? 3 : score >= 50 ? 2 : 1;
+    onComplete(stars, { score, tablesLearned: table, streak });
   };
 
-  // INTRO SCREEN
-  if (step === 'intro') {
-    return (
-      <div style={{ maxWidth: '500px', margin: '0 auto', padding: '30px', textAlign: 'center' }}>
-        <div style={{ fontSize: '70px', marginBottom: '16px' }}>🌟</div>
-        <h2 style={{ fontSize: '30px', fontWeight: 'bold', color: '#7C3AED', marginBottom: '8px' }}>
-          Tabel Ajaib!
-        </h2>
-        <p style={{ color: '#666', marginBottom: '24px', lineHeight: '1.6' }}>
-          Belajar perkalian itu <strong>MUDAH</strong>!<br/>
-          Lihat gambar → Hitung bareng → Hafal otomatis! 🎯
-        </p>
-        
-        <div style={{ 
-          background: '#F5F3FF', 
-          borderRadius: '20px', 
-          padding: '20px', 
-          marginBottom: '24px',
-          textAlign: 'left',
-        }}>
-          <h3 style={{ fontWeight: 'bold', marginBottom: '12px', textAlign: 'center' }}>📚 Cara Belajar:</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {[
-              { emoji: '👀', text: 'LIHAT gambar kotak-kotak' },
-              { emoji: '👆', text: 'HITUNG jumlahnya bareng-bareng' },
-              { emoji: '✍️', text: 'LATIHAN isi jawaban' },
-              { emoji: '🎯', text: 'KUIS untuk uji hafalan' },
-              { emoji: '🏆', text: 'Dapat bintang & lanjut tabel berikutnya!' },
-            ].map((item, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '24px' }}>{item.emoji}</span>
-                <span>{item.text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        
-        <button
-          onClick={() => setStep('learn')}
-          style={{
-            padding: '16px 40px',
-            fontSize: '20px',
-            fontWeight: 'bold',
-            borderRadius: '999px',
-            border: 'none',
-            background: 'linear-gradient(135deg, #F59E0B, #EF4444)',
-            color: 'white',
-            cursor: 'pointer',
-            boxShadow: '0 4px 20px rgba(245,158,11,0.4)',
-          }}
-        >
-          🌟 Mulai Belajar!
-        </button>
-      </div>
-    );
-  }
-
-  // LEARN SCREEN
-  if (step === 'learn') {
-    return (
-      <div style={{ maxWidth: '500px', margin: '0 auto', padding: '20px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-          <div style={{ fontSize: '14px', color: '#7C3AED', fontWeight: 'bold' }}>
-            📖 BELAJAR Tabel {currentTable}
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '4px', marginTop: '4px' }}>
-            {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} style={{
-                width: '20px',
-                height: '4px',
-                borderRadius: '2px',
-                background: i < currentTable - 1 ? '#10B981' : i === currentTable - 1 ? '#7C3AED' : '#E5E7EB',
-              }} />
-            ))}
-          </div>
-        </div>
-
-        {/* Visual multiplication */}
-        {renderVisualMultiplication(currentTable, currentMultiplier)}
-        
-        {/* Table pattern */}
-        {renderTablePattern(currentTable)}
-        
-        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-          {currentMultiplier > 1 && (
-            <button
-              onClick={() => {
-                setCurrentMultiplier(m => m - 1);
-                setShowAnswer(false);
-              }}
-              style={navBtnStyle('#6B7280')}
-            >
-              ◀ Sebelumnya
-            </button>
-          )}
-          <button
-            onClick={() => setStep('practice')}
-            style={navBtnStyle('#7C3AED')}
-          >
-            ✍️ Latihan Tabel {currentTable}
-          </button>
-          {currentMultiplier < 10 && (
-            <button
-              onClick={() => {
-                setCurrentMultiplier(m => m + 1);
-                setShowAnswer(false);
-              }}
-              style={navBtnStyle('#6B7280')}
-            >
-              Selanjutnya ▶
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // PRACTICE SCREEN
-  if (step === 'practice') {
-    return (
-      <div style={{ maxWidth: '500px', margin: '0 auto', padding: '20px', textAlign: 'center' }}>
-        <div style={{ marginBottom: '16px' }}>
-          <div style={{ fontSize: '14px', color: '#7C3AED', fontWeight: 'bold' }}>
-            ✍️ LATIHAN Tabel {currentTable} ({currentMultiplier}/10)
-          </div>
-          <div style={{ 
-            width: '100%', 
-            height: '8px', 
-            background: '#E5E7EB', 
-            borderRadius: '4px',
-            marginTop: '8px',
-            overflow: 'hidden',
-          }}>
-            <div style={{
-              width: `${(currentMultiplier / 10) * 100}%`,
-              height: '100%',
-              background: 'linear-gradient(to right, #7C3AED, #EC4899)',
-              borderRadius: '4px',
-              transition: 'width 0.3s',
-            }} />
-          </div>
-        </div>
-
-        {/* Visual hint */}
-        <div style={{ 
-          background: '#FFFBEB', 
-          borderRadius: '16px', 
-          padding: '20px',
-          marginBottom: '20px',
-        }}>
-          <div style={{ fontSize: '14px', color: '#92400E', marginBottom: '8px' }}>
-            Ingat: {currentTable} baris × {currentMultiplier} kolom
-          </div>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center',
-            gap: '3px',
-            marginBottom: '12px',
-          }}>
-            {Array.from({ length: currentMultiplier }).map((_, i) => (
-              <div key={i} style={{
-                width: '24px',
-                height: '24px',
-                borderRadius: '4px',
-                background: `hsl(${i * 30}, 70%, 60%)`,
-              }}>
-                ⭐
-              </div>
-            ))}
-          </div>
-          {currentTable > 1 && (
-            <div style={{ fontSize: '12px', color: '#92400E' }}>
-              × {currentTable} baris
+  // ===== MENU =====
+  if (step === 'menu') return (
+    <div style={{ maxWidth: '500px', margin: '0 auto', padding: '24px', textAlign: 'center', background: theme.bg, minHeight: '400px' }}>
+      <div style={{ fontSize: '60px', marginBottom: '8px' }}>🌟</div>
+      <h2 style={{ fontSize: '30px', fontWeight: '800', color: theme.heading, marginBottom: '4px' }}>Tabel Ajaib!</h2>
+      <p style={{ fontSize: '14px', color: theme.textSecondary, marginBottom: '20px' }}>Kuasai perkalian 1-10 dengan 3 cara belajar!</p>
+      
+      <div style={{ display: 'grid', gap: '8px', marginBottom: '20px' }}>
+        {[
+          { icon: '👁️', title: 'Visual', desc: 'Lihat kotak & gambar' },
+          { icon: '✍️', title: 'Latihan', desc: 'Isi jawaban bertahap' },
+          { icon: '🎯', title: 'Kuis', desc: 'Uji hafalan cepat' },
+        ].map((item, i) => (
+          <div key={i} style={{ background: theme.bgCard, borderRadius: '12px', padding: '12px', display: 'flex', alignItems: 'center', gap: '10px', border: `1px solid ${theme.border}` }}>
+            <span style={{ fontSize: '28px' }}>{item.icon}</span>
+            <div style={{ textAlign: 'left' }}>
+              <p style={{ fontWeight: '700', color: theme.heading, margin: 0 }}>{item.title}</p>
+              <p style={{ fontSize: '12px', color: theme.textSecondary, margin: 0 }}>{item.desc}</p>
             </div>
-          )}
-        </div>
-        
-        <div style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '20px', color: '#374151' }}>
-          {currentTable} × {currentMultiplier} = ?
-        </div>
-        
-        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
-          <input
-            type="number"
-            value={practiceAnswer}
-            onChange={e => setPracticeAnswer(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handlePracticeSubmit()}
-            placeholder="?"
-            style={{
-              width: '100px',
-              padding: '14px',
-              fontSize: '24px',
-              textAlign: 'center',
-              borderRadius: '12px',
-              border: `2px solid ${feedback === 'wrong' ? '#EF4444' : '#7C3AED'}`,
-            }}
-            autoFocus
-          />
-          <button
-            onClick={handlePracticeSubmit}
-            style={{
-              padding: '14px 24px',
-              fontSize: '18px',
-              fontWeight: 'bold',
-              borderRadius: '12px',
-              border: 'none',
-              background: '#10B981',
-              color: 'white',
-              cursor: 'pointer',
-            }}
-          >
-            ✅ Jawab
-          </button>
-        </div>
-
-        <button
-          onClick={() => setShowAnswer(!showAnswer)}
-          style={{
-            marginTop: '12px',
-            padding: '8px 16px',
-            border: 'none',
-            background: 'none',
-            color: '#7C3AED',
-            cursor: 'pointer',
-            fontSize: '14px',
-            textDecoration: 'underline',
-          }}
-        >
-          {showAnswer ? 'Sembunyikan' : '💡 Lihat Jawaban'}
-        </button>
-        
-        {showAnswer && (
-          <div style={{
-            marginTop: '8px',
-            padding: '10px',
-            background: '#EDE9FE',
-            borderRadius: '10px',
-            fontSize: '20px',
-            fontWeight: 'bold',
-            color: '#7C3AED',
-          }}>
-            {currentTable} × {currentMultiplier} = {currentTable * currentMultiplier}
           </div>
-        )}
-
-        {feedback && (
-          <div style={{
-            marginTop: '12px',
-            padding: '10px',
-            borderRadius: '10px',
-            background: feedback === 'correct' ? '#D1FAE5' : '#FEE2E2',
-            color: feedback === 'correct' ? '#065F46' : '#991B1B',
-            fontWeight: 'bold',
-            fontSize: '18px',
-          }}>
-            {feedback === 'correct' ? '🎉 Benar! Hebat!' : '❌ Coba lagi!'}
-          </div>
-        )}
+        ))}
       </div>
-    );
-  }
 
-  // QUIZ SCREEN
-  if (step === 'quiz') {
-    const currentQ = quizQuestions[quizIndex];
-    
-    return (
-      <div style={{ maxWidth: '500px', margin: '0 auto', padding: '20px', textAlign: 'center' }}>
-        <div style={{ marginBottom: '16px' }}>
-          <div style={{ fontSize: '14px', color: '#7C3AED', fontWeight: 'bold' }}>
-            🎯 KUIS Tabel {currentTable} ({quizIndex + 1}/{quizQuestions.length})
-          </div>
-          <div style={{ 
-            width: '100%', 
-            height: '8px', 
-            background: '#E5E7EB', 
-            borderRadius: '4px',
-            marginTop: '8px',
-          }}>
-            <div style={{
-              width: `${((quizIndex) / quizQuestions.length) * 100}%`,
-              height: '100%',
-              background: 'linear-gradient(to right, #F59E0B, #EF4444)',
-              borderRadius: '4px',
-              transition: 'width 0.3s',
-            }} />
-          </div>
-        </div>
+      <button onClick={() => { setStep('visual'); setTable(2); setMult(1); }} style={{ padding: '14px 36px', borderRadius: '999px', border: 'none', background: '#f59e0b', color: '#fff', fontWeight: '700', fontSize: '16px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(245,158,11,0.3)' }}>
+        🌟 Mulai Belajar!
+      </button>
+    </div>
+  );
 
-        <div style={{ 
-          background: 'white', 
-          borderRadius: '20px', 
-          padding: '30px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-          marginBottom: '20px',
-        }}>
-          <div style={{ fontSize: '50px', marginBottom: '16px' }}>🤔</div>
-          <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#374151' }}>
-            {currentQ?.q}
-          </div>
-        </div>
-        
-        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
-          <input
-            type="number"
-            value={quizAnswer}
-            onChange={e => setQuizAnswer(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleQuizSubmit()}
-            placeholder="?"
-            style={{
-              width: '100px',
-              padding: '14px',
-              fontSize: '24px',
-              textAlign: 'center',
-              borderRadius: '12px',
-              border: `2px solid ${feedback === 'wrong' ? '#EF4444' : '#7C3AED'}`,
-            }}
-            autoFocus
-          />
-          <button
-            onClick={handleQuizSubmit}
-            style={{
-              padding: '14px 24px',
-              fontSize: '18px',
-              fontWeight: 'bold',
-              borderRadius: '12px',
-              border: 'none',
-              background: '#F59E0B',
-              color: 'white',
-              cursor: 'pointer',
-            }}
-          >
-            ✅ Jawab
-          </button>
-        </div>
-
-        {feedback && (
-          <div style={{
-            marginTop: '12px',
-            padding: '10px',
-            borderRadius: '10px',
-            background: feedback === 'correct' ? '#D1FAE5' : '#FEE2E2',
-            color: feedback === 'correct' ? '#065F46' : '#991B1B',
-            fontWeight: 'bold',
-            fontSize: '18px',
-          }}>
-            {feedback === 'correct' 
-              ? `🎉 Benar! ${currentQ?.q} ${currentQ?.a}` 
-              : `❌ Jawaban: ${currentQ?.q} ${currentQ?.a}`}
-          </div>
-        )}
+  // ===== VISUAL =====
+  if (step === 'visual') return (
+    <div style={{ maxWidth: '500px', margin: '0 auto', padding: '16px', textAlign: 'center', background: theme.bg, minHeight: '400px' }}>
+      <p style={{ fontSize: '13px', fontWeight: '700', color: '#7c3aed' }}>👁️ Tabel {table} - {mult}/10</p>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '3px', marginBottom: '12px' }}>
+        {Array.from({ length: 10 }).map((_, i) => <div key={i} style={{ width: '18px', height: '3px', borderRadius: '2px', background: i < table - 1 ? '#10b981' : i === table - 1 ? '#7c3aed' : theme.border }} />)}
       </div>
-    );
-  }
 
-  // COMPLETE SCREEN
-  if (step === 'complete') {
-    return (
-      <div style={{ maxWidth: '500px', margin: '0 auto', padding: '30px', textAlign: 'center' }}>
-        <div style={{ fontSize: '80px', marginBottom: '16px' }}>🏆</div>
-        <h2 style={{ fontSize: '28px', color: '#7C3AED', marginBottom: '8px' }}>
-          KAMU HEBAT!
-        </h2>
-        <p style={{ color: '#666', marginBottom: '20px' }}>
-          Kamu sudah belajar perkalian 1-10! 🎉
+      <div style={{ background: '#fffbeb', borderRadius: '16px', padding: '16px', marginBottom: '12px' }}>
+        {renderFingerMethod(table, mult)}
+        {renderGrid(table, mult)}
+        <p style={{ fontSize: '32px', fontWeight: '900', color: '#7c3aed', marginTop: '8px' }}>
+          {table} × {mult} = <span style={{ background: '#7c3aed', color: '#fff', padding: '4px 16px', borderRadius: '10px' }}>{table * mult}</span>
         </p>
-        
-        <div style={{ 
-          background: '#F5F3FF', 
-          borderRadius: '20px', 
-          padding: '20px', 
-          marginBottom: '20px' 
-        }}>
-          <p>⭐ Skor: <strong>{score}</strong></p>
-          <p>🌟 Bintang: <strong>{'⭐'.repeat(stars >= 3 ? 3 : stars >= 1 ? 2 : 1)}</strong></p>
-          <p>📚 Tabel Dipelajari: <strong>{learnedTables.length}/10</strong></p>
-        </div>
-        
-        <div style={{ fontSize: '40px' }}>
-          {'⭐'.repeat(stars >= 3 ? 3 : stars >= 1 ? 2 : 1)}
-        </div>
-        
-        <button
-          onClick={handleComplete}
-          style={{
-            marginTop: '16px',
-            padding: '14px 32px',
-            fontSize: '18px',
-            fontWeight: 'bold',
-            borderRadius: '999px',
-            border: 'none',
-            background: '#F59E0B',
-            color: 'white',
-            cursor: 'pointer',
-          }}
-        >
-          🏆 Klaim Hadiah
-        </button>
       </div>
-    );
-  }
 
-  return null;
+      {/* Semua hasil tabel */}
+      <div style={{ background: theme.bgCard, borderRadius: '12px', padding: '10px', marginBottom: '12px', display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '4px' }}>
+        {Array.from({ length: 10 }).map((_, i) => (
+          <div key={i} onClick={() => { setMult(i + 1); }} style={{
+            padding: '6px', borderRadius: '8px', fontSize: '12px', fontWeight: '700', cursor: 'pointer',
+            background: mult === i + 1 ? '#ede9fe' : 'transparent',
+            color: mult === i + 1 ? '#7c3aed' : theme.text,
+            border: mult === i + 1 ? '2px solid #7c3aed' : '1px solid transparent',
+          }}>{table}×{i + 1}={table * (i + 1)}</div>
+        ))}
+      </div>
+
+      <p style={{ fontSize: '12px', color: '#92400e', background: '#fef3c7', borderRadius: '8px', padding: '6px', marginBottom: '12px' }}>
+        {TABLE_SONGS[table] || `Tambah ${table} setiap langkah!`}
+      </p>
+
+      <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+        {mult > 1 && <button onClick={() => setMult(m => m - 1)} style={navBtn(theme)}>◀</button>}
+        <button onClick={() => { setStep('practice'); setMult(1); setAnswer(''); setFeedback(null); }} style={{ ...navBtn(theme), background: '#7c3aed', color: '#fff' }}>✍️ Latihan</button>
+        {mult < 10 && <button onClick={() => setMult(m => m + 1)} style={navBtn(theme)}>▶</button>}
+      </div>
+    </div>
+  );
+
+  // ===== PRACTICE =====
+  if (step === 'practice') return (
+    <div style={{ maxWidth: '500px', margin: '0 auto', padding: '16px', textAlign: 'center', background: theme.bg, minHeight: '400px' }}>
+      <p style={{ fontSize: '13px', fontWeight: '700', color: '#7c3aed' }}>✍️ Tabel {table} ({mult}/10)</p>
+      <div style={{ width: '100%', height: '6px', background: theme.border, borderRadius: '3px', margin: '8px 0 16px' }}>
+        <div style={{ width: `${(mult / 10) * 100}%`, height: '100%', background: '#7c3aed', borderRadius: '3px', transition: 'width 0.3s' }} />
+      </div>
+      <div style={{ background: '#fffbeb', borderRadius: '16px', padding: '16px', marginBottom: '16px' }}>
+        {renderGrid(table, mult)}
+        <p style={{ fontSize: '32px', fontWeight: '900', color: theme.heading }}>{table} × {mult} = ?</p>
+      </div>
+      {hintLevel > 0 && <p style={{ fontSize: '13px', color: '#92400e', background: '#fef3c7', borderRadius: '8px', padding: '6px', marginBottom: '8px' }}>{getHint(table, mult, hintLevel)}</p>}
+      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+        <input type="number" value={answer} onChange={e => setAnswer(e.target.value)} onKeyDown={e => e.key === 'Enter' && handlePractice()} placeholder="?" style={{ width: '80px', padding: '12px', fontSize: '22px', textAlign: 'center', borderRadius: '10px', border: `2px solid ${feedback === 'wrong' ? '#ef4444' : '#7c3aed'}`, background: theme.input, color: theme.text, outline: 'none' }} autoFocus />
+        <button onClick={handlePractice} style={{ padding: '12px 20px', borderRadius: '10px', border: 'none', background: '#10b981', color: '#fff', fontWeight: '700', fontSize: '16px', cursor: 'pointer' }}>✅</button>
+      </div>
+      <button onClick={() => setHintLevel(h => Math.min(h + 1, 3))} style={{ background: 'none', border: 'none', color: '#7c3aed', fontSize: '12px', cursor: 'pointer', marginTop: '6px' }}>💡 Butuh bantuan?</button>
+      {feedback && (
+        <div style={{ marginTop: '8px', padding: '8px', borderRadius: '8px', background: feedback === 'correct' ? '#d1fae5' : '#fee2e2', color: feedback === 'correct' ? '#065f46' : '#991b1b', fontWeight: '600' }}>
+          {feedback === 'correct' ? `🎉 ${table}×${mult}=${table * mult}` : `❌ ${table}×${mult}=${table * mult}`}
+        </div>
+      )}
+      <div style={{ marginTop: '8px', fontSize: '12px', color: theme.textMuted }}>
+        ⭐ {score} | 🔥 {streak}x
+      </div>
+    </div>
+  );
+
+  // ===== QUIZ =====
+  if (step === 'quiz') return (
+    <div style={{ maxWidth: '500px', margin: '0 auto', padding: '16px', textAlign: 'center', background: theme.bg, minHeight: '400px' }}>
+      <p style={{ fontSize: '14px', fontWeight: '700', color: '#f59e0b' }}>🎯 Kuis Tabel {table} ({quizIdx + 1}/10)</p>
+      <div style={{ width: '100%', height: '6px', background: theme.border, borderRadius: '3px', margin: '8px 0 16px' }}>
+        <div style={{ width: `${(quizIdx / 10) * 100}%`, height: '100%', background: '#f59e0b', borderRadius: '3px', transition: 'width 0.3s' }} />
+      </div>
+      <div style={{ background: theme.bgCard, borderRadius: '16px', padding: '24px', marginBottom: '16px', boxShadow: theme.shadow }}>
+        <div style={{ fontSize: '50px', marginBottom: '8px' }}>🤔</div>
+        <p style={{ fontSize: '32px', fontWeight: '900', color: theme.heading }}>
+          {quizQ[quizIdx]?.a} × {quizQ[quizIdx]?.b} = ?
+        </p>
+      </div>
+      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+        <input type="number" value={answer} onChange={e => setAnswer(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleQuiz()} placeholder="?" style={{ width: '80px', padding: '12px', fontSize: '22px', textAlign: 'center', borderRadius: '10px', border: `2px solid ${feedback === 'wrong' ? '#ef4444' : '#f59e0b'}`, background: theme.input, color: theme.text, outline: 'none' }} autoFocus />
+        <button onClick={handleQuiz} style={{ padding: '12px 20px', borderRadius: '10px', border: 'none', background: '#f59e0b', color: '#fff', fontWeight: '700', fontSize: '16px', cursor: 'pointer' }}>✅</button>
+      </div>
+      {feedback && (
+        <div style={{ marginTop: '8px', padding: '8px', borderRadius: '8px', background: feedback === 'correct' ? '#d1fae5' : '#fee2e2', color: feedback === 'correct' ? '#065f46' : '#991b1b', fontWeight: '600' }}>
+          {feedback === 'correct' ? '🎉 Benar! +3' : `❌ ${quizQ[quizIdx]?.a}×${quizQ[quizIdx]?.b}=${(quizQ[quizIdx]?.a || 0) * (quizQ[quizIdx]?.b || 0)}`}
+        </div>
+      )}
+      <div style={{ marginTop: '8px', fontSize: '12px', color: theme.textMuted }}>⭐ {score} | 🔥 {streak}x</div>
+    </div>
+  );
+
+  // ===== COMPLETE =====
+  const stars = score >= 80 ? 3 : score >= 50 ? 2 : 1;
+  return (
+    <div style={{ maxWidth: '500px', margin: '0 auto', padding: '24px', textAlign: 'center', background: theme.bg, minHeight: '400px' }}>
+      <div style={{ fontSize: '60px' }}>🏆</div>
+      <h2 style={{ fontSize: '24px', fontWeight: '800', color: theme.heading }}>Master Perkalian!</h2>
+      <p style={{ color: theme.textSecondary }}>Skor: {score} | Tabel: 1-{table}</p>
+      <p style={{ color: theme.textSecondary }}>Streak: {streak}x 🔥</p>
+      <div style={{ fontSize: '40px' }}>{'⭐'.repeat(stars)}</div>
+      <div style={{ marginTop: '16px', display: 'flex', gap: '8px', justifyContent: 'center' }}>
+        <button onClick={() => { setStep('menu'); setTable(2); setMult(1); setScore(0); setStreak(0); }} style={{ padding: '10px 20px', borderRadius: '999px', border: 'none', background: theme.bgHover, color: theme.text, fontWeight: '600', cursor: 'pointer' }}>🔄 Ulang</button>
+        <button onClick={handleComplete} style={{ padding: '10px 20px', borderRadius: '999px', border: 'none', background: '#f59e0b', color: '#fff', fontWeight: '600', cursor: 'pointer' }}>🏆 Klaim!</button>
+      </div>
+    </div>
+  );
 }
 
-function navBtnStyle(color: string): React.CSSProperties {
+function navBtn(theme: any) {
   return {
-    padding: '10px 20px',
-    fontSize: '14px',
-    fontWeight: 'bold',
-    borderRadius: '999px',
-    border: 'none',
-    background: color,
-    color: 'white',
-    cursor: 'pointer',
+    padding: '8px 14px', borderRadius: '999px', border: 'none',
+    background: theme.bgHover, color: theme.text,
+    fontWeight: '600', fontSize: '14px', cursor: 'pointer',
   };
 }
