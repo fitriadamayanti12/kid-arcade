@@ -2,7 +2,6 @@
 import { useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useSoundEffect } from '@/hooks/useSoundEffect';
-import type { GameType } from '@/app/components/games/GameImports';
 
 const BADGE_RULES: Record<string, (stars: number, score: number, extra?: any) => string | null> = {
   memory: (stars) => stars >= 3 ? '🧠 Memory Master' : null,
@@ -27,7 +26,6 @@ const BADGE_RULES: Record<string, (stars: number, score: number, extra?: any) =>
   geoquest: (_, __, extra) => extra?.totalMastered >= 6 ? '📐 Geo Master' : null,
   magictable: (_, __, extra) => extra?.tablesLearned >= 5 ? '🌟 Table Wizard' : null,
   bangunyuk: (_, __, extra) => extra?.learnedShapes >= 4 ? '🏠 Geometry Master' : null,
-  // New games badges
   kenalangka: (stars) => stars >= 3 ? '🌟 Angka Master' : null,
   hitunghewan: (stars) => stars >= 3 ? '🐮 Animal Counter' : null,
   tambahsederhana: (stars) => stars >= 3 ? '➕ Math Starter' : null,
@@ -55,7 +53,7 @@ export function useGameComplete(playerName: string) {
     try {
       playSound('win');
 
-      // 1. INSERT ke game_scores dengan data lengkap
+      // 1. INSERT ke game_scores
       const { error: insertError } = await supabase
         .from('game_scores')
         .insert([{
@@ -92,7 +90,6 @@ export function useGameComplete(playerName: string) {
         const newTotalStars = (existing.total_stars || 0) + stars;
         const newTotalGames = (existing.total_games_played || 0) + 1;
 
-        // Check badges
         const badgeRule = BADGE_RULES[selectedGame];
         if (badgeRule) newBadge = badgeRule(stars, score, extra);
         if (!newBadge && newTotalGames === 5) newBadge = '🎮 Gamer Pemula';
@@ -116,7 +113,6 @@ export function useGameComplete(playerName: string) {
 
         if (newBadge) playSound('levelUp');
       } else {
-        // Player baru
         const badgeRule = BADGE_RULES[selectedGame];
         if (badgeRule) newBadge = badgeRule(stars, score, extra);
 
@@ -133,6 +129,11 @@ export function useGameComplete(playerName: string) {
           }]);
 
         if (newBadge) playSound('levelUp');
+      }
+
+      // 🔥 TRIGGER EVENT untuk Leaderboard & Progress auto-refresh
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('game-completed'));
       }
 
       // Trigger reward display
