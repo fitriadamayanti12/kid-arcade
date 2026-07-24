@@ -61,9 +61,16 @@ const games: GameItem[] = [
 
   // ========== Kelas 3 ==========
   { id: 'kalimaster', label: '✖️ Kali Master', color: '#ede9fe', textColor: '#5b21b6', grade: '3' },
+  { id: 'kalimultimode', label: '🎮 Multi Mode Kali', color: '#fef3c7', textColor: '#92400e', grade: '3' },
+  { id: 'timestablehero', label: '⚡ Times Table Hero', color: '#fef3c7', textColor: '#92400e', grade: '3' },
   { id: 'bagimaster', label: '➗ Bagi Master', color: '#d1fae5', textColor: '#065f46', grade: '3' },
   { id: 'pecahanvisual', label: '🍕 Pecahan Visual', color: '#fef3c7', textColor: '#92400e', grade: '3' },
   { id: 'geometrifun', label: '📐 Geometri Fun', color: '#dbeafe', textColor: '#1e40af', grade: '3' },
+  { id: 'thinkingblocks', label: '🟦 Thinking Blocks', color: '#dbeafe', textColor: '#1e40af', grade: '3' },
+  { id: 'placevaluequest', label: '🔢 Place Value Quest', color: '#d1fae5', textColor: '#065f46', grade: '3' },
+  { id: 'measurequest', label: '📏 MeasureQuest', color: '#eff6ff', textColor: '#1e40af', grade: '3' }, // 👈 BARU
+  { id: 'shapeland', label: '🔷 ShapeLand', color: '#ecfdf5', textColor: '#065f46', grade: '3' }, // 👈 BARU
+  { id: 'moneysmart', label: '💰 MoneySmart', color: '#fffbeb', textColor: '#92400e', grade: '3' }, // 👈 BARU
   { id: 'mathcraft', label: '🏗️ Craft', color: '#fef3c7', textColor: '#92400e', grade: '3' },
   { id: 'dicequest', label: '🎲 DiceQuest', color: '#ffedd5', textColor: '#9a3412', grade: '3' },
   { id: 'multblitz', label: '⚡ Blitz Perkalian', color: '#fef3c7', textColor: '#92400e', grade: '3' },
@@ -95,6 +102,12 @@ const games: GameItem[] = [
   { id: 'bilbulat', label: '➖ Bil Bulat', color: '#e0e7ff', textColor: '#3730a3', grade: '6' },
   { id: 'statistikdata', label: '📊 Statistik', color: '#fce7f3', textColor: '#9d174d', grade: '6' },
   { id: 'bangunruang6', label: '📦 Bangun Ruang', color: '#ccfbf1', textColor: '#134e4a', grade: '6' },
+  { id: 'ruangmaster', label: '🏠 Ruang Master', color: '#dbeafe', textColor: '#1e40af', grade: '6' },
+  { id: 'ratiorumble', label: '⚖️ Ratio Rumble', color: '#ede9fe', textColor: '#5b21b6', grade: '6' },
+  { id: 'algebrabalance', label: '⚖️ Algebra Balance', color: '#f5f3ff', textColor: '#5b21b6', grade: '6' },
+  { id: 'decimalmart', label: '🛒 DecimalMart', color: '#d1fae5', textColor: '#065f46', grade: '6' },
+  { id: 'mixfractionkitchen', label: '🍕 MixFraction Kitchen', color: '#fffbeb', textColor: '#92400e', grade: '6' },
+  { id: 'mathmaster6', label: '🎓 MathMaster 6', color: '#ede9fe', textColor: '#5b21b6', grade: '6' },
   { id: 'mathracer6', label: '🏎️ Racer 6', color: '#fee2e2', textColor: '#991b1b', grade: '6' },
   { id: 'mathtower', label: '🏰 Tower', color: '#e5e7eb', textColor: '#374151', grade: '6' },
   { id: 'geoquest', label: '📐 GeoQuest', color: '#ede9fe', textColor: '#5b21b6', grade: '6' },

@@ -1,129 +1,94 @@
+// app/components/games/PizzaFraction.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSoundEffect } from '@/hooks/useSoundEffect';
+import { useThemeStyles } from '@/hooks/useThemeStyles';
 
-interface PuzzlePiece {
-  id: string;
-  name: string;
-  image: string;
-  correctSlotId: string;
+interface PizzaFractionProps {
+  onComplete: (stars: number, extra?: any) => void;
 }
 
-interface Slot {
-  id: string;
-  label: string;
-  imageSilhouette: string;
-}
+export default function PizzaFraction({ onComplete }: PizzaFractionProps) {
+  const theme = useThemeStyles();
+  const [ready, setReady] = useState(false);
+  const [current, setCurrent] = useState(0);
+  const [score, setScore] = useState(0);
+  const [done, setDone] = useState(false);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState(false);
+  const [correct, setCorrect] = useState(false);
 
-const pieces: PuzzlePiece[] = [
-  { id: 'p1', name: 'Kucing', image: '🐱', correctSlotId: 'slot1' },
-  { id: 'p2', name: 'Anjing', image: '🐶', correctSlotId: 'slot2' },
-  { id: 'p3', name: 'Monyet', image: '🐵', correctSlotId: 'slot3' },
-  { id: 'p4', name: 'Kelinci', image: '🐰', correctSlotId: 'slot4' },
-  { id: 'p5', name: 'Burung', image: '🐦', correctSlotId: 'slot5' },
-  { id: 'p6', name: 'Ikan', image: '🐠', correctSlotId: 'slot6' },
-];
+  const questions = [
+    { q: '3/4 = ... dari 4 bagian', opts: ['1', '2', '3', '4'], ans: '3', exp: '3 dari 4 bagian = 3/4' },
+    { q: '1/2 + 1/2 = ?', opts: ['1/4', '2/4', '3/4', '4/4'], ans: '4/4', exp: '1/2 + 1/2 = 4/4 = 1' },
+    { q: '2/4 ... 1/2', opts: ['>', '<', '='], ans: '=', exp: '2/4 = 1/2' },
+    { q: 'Pecahan senilai 1/2?', opts: ['1/4', '2/4', '3/4', '1/3'], ans: '2/4', exp: '1/2 = 2/4 (×2)' },
+    { q: '1/4 + 2/4 = ?', opts: ['1/4', '2/4', '3/4', '4/4'], ans: '3/4', exp: '1+2=3, penyebut tetap 4' },
+  ];
 
-const slots: Slot[] = [
-  { id: 'slot1', label: 'Tempat Kucing', imageSilhouette: '🐱‍👤' },
-  { id: 'slot2', label: 'Tempat Anjing', imageSilhouette: '🐕‍🦺' },
-  { id: 'slot3', label: 'Tempat Monyet', imageSilhouette: '🐒' },
-  { id: 'slot4', label: 'Tempat Kelinci', imageSilhouette: '🐇' },
-  { id: 'slot5', label: 'Tempat Burung', imageSilhouette: '🕊️' },
-  { id: 'slot6', label: 'Tempat Ikan', imageSilhouette: '🐟' },
-];
+  useEffect(() => { const t = setTimeout(() => setReady(true), 200); return () => clearTimeout(t); }, []);
 
-interface PuzzleGameProps {
-  onComplete: (stars: number, timeSpent: number) => void;
-}
-
-export default function PuzzleGame({ onComplete }: PuzzleGameProps) {
-  const [matched, setMatched] = useState<Record<string, string>>({});
-  const [startTime] = useState(Date.now());
-  const [feedback, setFeedback] = useState('');
-  const { playSound } = useSoundEffect();
-
-  useEffect(() => {
-    const allSlotsFilled = Object.keys(matched).length === slots.length;
-    if (allSlotsFilled) {
-      const timeSpent = (Date.now() - startTime) / 1000;
-      let stars = 1;
-      if (timeSpent < 20) stars = 3;
-      else if (timeSpent < 40) stars = 2;
-      onComplete(stars, timeSpent);
-    }
-  }, [matched]);
-
-  const handleDragStart = (e: React.DragEvent, piece: PuzzlePiece) => {
-    e.dataTransfer.setData('text/plain', JSON.stringify(piece));
+  const handle = (ans: string) => {
+    if (feedback) return;
+    setSelected(ans);
+    const ok = ans === questions[current].ans;
+    setCorrect(ok); setFeedback(true);
+    if (ok) setScore(s => s + 1);
+    setTimeout(() => {
+      if (current < questions.length - 1) { setCurrent(c => c + 1); setSelected(null); setFeedback(false); }
+      else { const f = score + (ok ? 1 : 0); setDone(true); onComplete(f >= 5 ? 3 : f >= 3 ? 2 : 1, { score: f, total: questions.length }); }
+    }, 1500);
   };
 
-  const handleDragOver = (e: React.DragEvent) => e.preventDefault();
+  if (!ready) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px', background: theme.bg }}>
+      <div style={{ fontSize: '60px', animation: 'float 1s ease-in-out infinite' }}>🍕</div>
+    </div>
+  );
 
-  const handleDrop = (e: React.DragEvent, slot: Slot) => {
-    e.preventDefault();
-    if (matched[slot.id]) return;
+  if (done) {
+    const stars = score >= 5 ? 3 : score >= 3 ? 2 : 1;
+    return (
+      <div style={{ maxWidth: '500px', margin: '0 auto', padding: '24px', textAlign: 'center', background: theme.bg, minHeight: '400px' }}>
+        <div style={{ fontSize: '60px' }}>🎉🍕</div>
+        <h2 style={{ fontSize: '24px', fontWeight: '800', color: theme.heading }}>Selesai!</h2>
+        <p style={{ color: theme.textSecondary }}>Skor: {score}/{questions.length}</p>
+        <div style={{ fontSize: '40px' }}>{'⭐'.repeat(stars)}</div>
+      </div>
+    );
+  }
 
-    const piece: PuzzlePiece = JSON.parse(e.dataTransfer.getData('text/plain'));
-
-    if (piece.correctSlotId === slot.id) {
-      setMatched((prev) => ({ ...prev, [slot.id]: piece.id }));
-      setFeedback(`✅ Mantap! ${piece.name} masuk ke tempat yang benar!`);
-      playSound('correct');
-    } else {
-      setFeedback(`❌ Coba lagi... ${piece.name} bukan untuk sini.`);
-      playSound('wrong');
-    }
-    setTimeout(() => setFeedback(''), 1500);
-  };
-
-  const isSlotFilled = (slotId: string) => !!matched[slotId];
+  const q = questions[current];
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold text-center mb-4">✨ Seret Potongan ke Bayangan ✨</h2>
-      <div className="flex flex-wrap gap-8 justify-center">
-        <div className="flex-1 min-w-[200px]">
-          <div className="grid grid-cols-2 gap-4">
-            {pieces.map((piece) => {
-              if (Object.values(matched).includes(piece.id)) return null;
-              return (
-                <div
-                  key={piece.id}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, piece)}
-                  className="bg-yellow-200 p-4 rounded-2xl flex flex-col items-center gap-2 cursor-grab hover:bg-yellow-300 transition shadow-md hover:scale-105"
-                >
-                  <span className="text-5xl">{piece.image}</span>
-                  <span className="text-lg font-bold">{piece.name}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        <div className="flex-1 min-w-[200px]">
-          <div className="grid grid-cols-2 gap-4">
-            {slots.map((slot) => (
-              <div
-                key={slot.id}
-                onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(e, slot)}
-                className={`p-4 rounded-2xl border-4 text-center min-h-[120px] flex flex-col items-center justify-center ${
-                  isSlotFilled(slot.id) ? 'bg-green-200 border-green-600' : 'bg-blue-50 border-blue-400 border-dashed'
-                }`}
-              >
-                <div className="text-5xl opacity-60">{slot.imageSilhouette}</div>
-                <div className="text-sm font-semibold mt-2">{slot.label}</div>
-                {isSlotFilled(slot.id) && <div className="text-2xl mt-1">✔️</div>}
-              </div>
-            ))}
-          </div>
-        </div>
+    <div style={{ maxWidth: '500px', margin: '0 auto', padding: '16px', textAlign: 'center', background: theme.bg, minHeight: '400px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
+        <span style={{ color: theme.textSecondary }}>Soal {current + 1}/{questions.length}</span>
+        <span style={{ color: '#10b981', fontWeight: '700' }}>Benar: {score}</span>
       </div>
+      <div style={{ width: '100%', height: '6px', background: theme.border, borderRadius: '3px', marginBottom: '16px' }}>
+        <div style={{ width: `${(current / questions.length) * 100}%`, height: '100%', background: '#f97316', borderRadius: '3px', transition: 'width 0.3s' }} />
+      </div>
+
+      <div style={{ background: '#fffbeb', borderRadius: '16px', padding: '24px', marginBottom: '16px' }}>
+        <div style={{ fontSize: '60px', marginBottom: '12px' }}>🍕</div>
+        <h3 style={{ fontSize: '20px', fontWeight: '700', color: '#92400e' }}>{q.q}</h3>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', maxWidth: '280px', margin: '0 auto' }}>
+        {q.opts.map((opt, i) => (
+          <button key={i} onClick={() => handle(opt)} disabled={feedback} style={{
+            padding: '14px', fontSize: '20px', fontWeight: '700', borderRadius: '12px', border: 'none',
+            background: feedback && opt === q.ans ? '#10b981' : feedback && opt === selected ? '#ef4444' : theme.bgHover,
+            color: (feedback && (opt === q.ans || opt === selected)) ? '#fff' : theme.text,
+            cursor: feedback ? 'default' : 'pointer',
+          }}>{opt}</button>
+        ))}
+      </div>
+
       {feedback && (
-        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-yellow-300 text-xl px-6 py-3 rounded-full shadow-lg animate-bounce z-50">
-          {feedback}
+        <div style={{ marginTop: '12px', padding: '12px', borderRadius: '10px', background: correct ? '#d1fae5' : '#fee2e2', color: correct ? '#065f46' : '#991b1b', fontWeight: '600', animation: 'pop 0.3s ease-out' }}>
+          {correct ? '🎉 Benar!' : `❌ ${q.exp}`}
         </div>
       )}
     </div>

@@ -3,7 +3,7 @@ import dynamic from 'next/dynamic';
 import { ComponentType } from 'react';
 
 // ============================================
-// GAME REGISTRY - ALL 60+ GAMES
+// GAME REGISTRY - ALL 78+ GAMES
 // ============================================
 const GAME_REGISTRY: Record<string, any> = {
   // ========== PAUD ==========
@@ -38,9 +38,16 @@ const GAME_REGISTRY: Record<string, any> = {
 
   // ========== Kelas 3 ==========
   kalimaster: () => import('@/app/components/games/kelas3/KaliMaster'),
+  kalimultimode: () => import('@/app/components/games/kelas3/KaliMultiMode'),
   bagimaster: () => import('@/app/components/games/kelas3/BagiMaster'),
   pecahanvisual: () => import('@/app/components/games/kelas3/PecahanVisual'),
   geometrifun: () => import('@/app/components/games/kelas3/GeometriFun'),
+  thinkingblocks: () => import('@/app/components/games/kelas3/ThinkingBlocks'),
+  placevaluequest: () => import('@/app/components/games/kelas3/PlaceValueQuest'),
+  timestablehero: () => import('@/app/components/games/kelas3/TimesTableHero'),
+  measurequest: () => import('@/app/components/games/kelas3/MeasureQuest'), // 👈 BARU
+  shapeland: () => import('@/app/components/games/kelas3/ShapeLand'), // 👈 BARU
+  moneysmart: () => import('@/app/components/games/kelas3/MoneySmart'), // 👈 BARU
 
   // ========== Kelas 4 ==========
   pecahan4: () => import('@/app/components/games/kelas4/Pecahan4'),
@@ -62,6 +69,12 @@ const GAME_REGISTRY: Record<string, any> = {
   bilbulat: () => import('@/app/components/games/kelas6/BilBulat'),
   statistikdata: () => import('@/app/components/games/kelas6/StatistikData'),
   bangunruang6: () => import('@/app/components/games/kelas6/BangunRuang6'),
+  ruangmaster: () => import('@/app/components/games/kelas6/RuangMaster'),
+  ratiorumble: () => import('@/app/components/games/kelas6/RatioRumble'),
+  algebrabalance: () => import('@/app/components/games/kelas6/AlgebraBalance'),
+  decimalmart: () => import('@/app/components/games/kelas6/DecimalMart'),
+  mixfractionkitchen: () => import('@/app/components/games/kelas6/MixFractionKitchen'),
+  mathmaster6: () => import('@/app/components/games/kelas6/MathMaster6'),
 
   // ========== MathRacer variants (redirect ke MathRacer) ==========
   mathracer4: () => import('@/app/components/games/MathRacer'),
