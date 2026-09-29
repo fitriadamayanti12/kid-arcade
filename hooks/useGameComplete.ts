@@ -10,6 +10,28 @@ const BADGE_RULES: Record<string, (stars: number, score: number, extra?: any) =>
   wordmatch: (stars) => stars >= 3 ? '📖 Word Master' : null,
   fillblanks: (stars) => stars >= 3 ? '✏️ Fill Master' : null,
   aigame: (stars) => stars >= 3 ? '🤖 AI Master' : null,
+  // 🏅 Game Penalaran Olimpiade Kelas 1
+  polalogika: (stars, _s, extra) => stars >= 3 && extra?.bossCleared ? '🧩 Master Pola' : null,
+  timbanganajaib: (stars, _s, extra) => stars >= 3 && extra?.bossCleared ? '⚖️ Ahli Timbangan' : null,
+  kotakkombinasi: (stars, _s, extra) => stars >= 3 && extra?.bossCleared ? '📦 Jago Kombinasi' : null,
+  detektifangka: (stars, _s, extra) => stars >= 3 && extra?.bossCleared ? '🔍 Detektif Ulung' : null,
+  // 🚀 Game Kilat Perkalian Kelas 3
+  sprintkali: (stars, _s, extra) => stars >= 3 && (extra?.score ?? 0) >= 25 ? '⚡ Kilat Perkalian' : null,
+  kartuberpasangan: (stars) => stars >= 3 ? '🎴 Ingatan Tajam' : null,
+  rodakali: (stars) => stars === 3 ? '🎡 Jackpot Kali' : null,
+  // 🎯 Game Penguasaan: lencana jika penguasaan tinggi
+  catchup1: (stars, _s, extra) => stars >= 3 && (extra?.mastery ?? 0) >= 0.25 ? '🚀 Jagoan Berhitung' : null,
+  kalikilat3: (stars, _s, extra) => stars >= 3 && (extra?.mastery ?? 0) >= 0.5 ? '⚡ Jagoan Perkalian' : null,
+  master6: (stars, _s, extra) => stars >= 3 && (extra?.mastery ?? 0) >= 0.4 ? '🎓 Master Materi 6' : null,
+  // 🔥 Game Super: badge kalau bos dikalahkan / combo tinggi
+  superpaud: (stars, _s, extra) => extra?.bossCleared && stars >= 3 ? '🌻 Tukang Kebun Ajaib' : null,
+  supertk: (stars, _s, extra) => extra?.bossCleared && stars >= 3 ? '🏰 Ksatria Angka' : null,
+  super1: (stars, _s, extra) => extra?.bossCleared && stars >= 3 ? '⚔️ Pendekar Hitung' : null,
+  super2: (stars, _s, extra) => extra?.bossCleared && stars >= 3 ? '👑 Raja Perkalian' : null,
+  super3: (stars, _s, extra) => extra?.bossCleared && stars >= 3 ? '🥊 Juara Arena' : null,
+  super4: (stars, _s, extra) => extra?.bossCleared && stars >= 3 ? '🗝️ Penakluk Dungeon' : null,
+  super5: (stars, _s, extra) => extra?.bossCleared && stars >= 3 ? '🏅 Medali Olimpiade' : null,
+  super6: (stars, _s, extra) => extra?.bossCleared && stars >= 3 ? '🏆 Juara Kejuaraan' : null,
   countobjects: (stars) => stars >= 3 ? '🔢 Counting Master' : null,
   pizzafraction: (stars) => stars >= 3 ? '🍕 Fraction Expert' : null,
   mathadventure: (_, __, extra) => extra?.score >= 200 ? '🎮 Game Master' : null,
@@ -48,7 +70,10 @@ export function useGameComplete(playerName: string) {
     if (isCompletingRef.current || !playerName) return;
     isCompletingRef.current = true;
 
-    const score = extra?.score || stars * 10;
+    // ⚡ Bonus kombo — makin panjang streak jawaban benar di dalam game, makin besar bonusnya
+    const comboValue = extra?.streak || extra?.maxCombo || extra?.combo || 0;
+    const comboBonus = comboValue >= 10 ? 15 : comboValue >= 5 ? 8 : comboValue >= 3 ? 3 : 0;
+    const score = (extra?.score || stars * 10) + comboBonus;
 
     try {
       playSound('win');
@@ -85,10 +110,17 @@ export function useGameComplete(playerName: string) {
         .single();
 
       let newBadge: string | null = null;
+      let leveledUp = false;
+      let newLevel = 1;
 
       if (existing) {
         const newTotalStars = (existing.total_stars || 0) + stars;
         const newTotalGames = (existing.total_games_played || 0) + 1;
+
+        // 🏆 Level = total bintang / 10 — sama dengan rumus di ProgressDashboard
+        const prevLevel = Math.floor((existing.total_stars || 0) / 10) + 1;
+        newLevel = Math.floor(newTotalStars / 10) + 1;
+        leveledUp = newLevel > prevLevel;
 
         const badgeRule = BADGE_RULES[selectedGame];
         if (badgeRule) newBadge = badgeRule(stars, score, extra);
@@ -96,6 +128,9 @@ export function useGameComplete(playerName: string) {
         if (!newBadge && newTotalStars >= 30) newBadge = '🌟 Bintang Kolektor';
         if (!newBadge && newTotalGames === 10) newBadge = '🏆 Game Champion';
         if (!newBadge && newTotalStars >= 100) newBadge = '👑 LEGEND!';
+
+        // Jangan beri lencana yang sama berulang kali
+        if (newBadge && (existing.badges || []).includes(newBadge)) newBadge = null;
 
         const updatedBadges = newBadge 
           ? [...(existing.badges || []), newBadge] 
@@ -111,7 +146,7 @@ export function useGameComplete(playerName: string) {
           })
           .eq('id', existing.id);
 
-        if (newBadge) playSound('levelUp');
+        if (newBadge || leveledUp) playSound('levelUp');
       } else {
         const badgeRule = BADGE_RULES[selectedGame];
         if (badgeRule) newBadge = badgeRule(stars, score, extra);
@@ -142,6 +177,9 @@ export function useGameComplete(playerName: string) {
         newBadge,
         gameType: selectedGame,
         score,
+        comboBonus,
+        leveledUp,
+        newLevel,
       });
 
     } catch (error) {
@@ -151,6 +189,9 @@ export function useGameComplete(playerName: string) {
         newBadge: null,
         gameType: selectedGame,
         score,
+        comboBonus,
+        leveledUp: false,
+        newLevel: 1,
       });
     } finally {
       setTimeout(() => { isCompletingRef.current = false; }, 500);

@@ -6,6 +6,33 @@ import { ComponentType } from 'react';
 // GAME REGISTRY - ALL 78+ GAMES
 // ============================================
 const GAME_REGISTRY: Record<string, any> = {
+  // ========== 🏅 GAME PENALARAN OLIMPIADE KELAS 1 (pola, perbandingan, kombinatorik, deduksi) ==========
+  polalogika: () => import('@/app/components/games/kelas1/PolaLogika'),
+  timbanganajaib: () => import('@/app/components/games/kelas1/TimbanganAjaib'),
+  kotakkombinasi: () => import('@/app/components/games/kelas1/KotakKombinasi'),
+  detektifangka: () => import('@/app/components/games/kelas1/DetektifAngka'),
+
+  // ========== 🚀 GAME KILAT PERKALIAN KELAS 3 (sesi super pendek, minim klik, buat anak pemalas) ==========
+  sprintkali: () => import('@/app/components/games/kelas3/SprintKali60'),
+  tembakjawaban: () => import('@/app/components/games/kelas3/TembakJawaban'),
+  kartuberpasangan: () => import('@/app/components/games/kelas3/KartuBerpasangan'),
+  rodakali: () => import('@/app/components/games/kelas3/RodaKali'),
+
+  // ========== 🎯 GAME PENGUASAAN (latihan adaptif + pembahasan langkah demi langkah) ==========
+  catchup1: () => import('@/app/components/games/kelas1/JagoanBerhitung'),
+  kalikilat3: () => import('@/app/components/games/kelas3/PerkalianKilat'),
+  master6: () => import('@/app/components/games/kelas6/MasterMateri6'),
+
+  // ========== 🔥 GAME SUPER (mesin PowerBattle: nyawa, combo, 50:50, ronde bos) ==========
+  superpaud: () => import('@/app/components/games/paud/SuperKebunAngka'),
+  supertk: () => import('@/app/components/games/tk/SuperPetualanganAngka'),
+  super1: () => import('@/app/components/games/kelas1/SuperArenaHitung'),
+  super2: () => import('@/app/components/games/kelas2/SuperKerajaanKali'),
+  super3: () => import('@/app/components/games/kelas3/SuperArenaEmpatOperasi'),
+  super4: () => import('@/app/components/games/kelas4/SuperDungeonPecahan'),
+  super5: () => import('@/app/components/games/kelas5/SuperOlimpiadeArena'),
+  super6: () => import('@/app/components/games/kelas6/SuperKejuaraanMatematika'),
+
   // ========== PAUD ==========
   kenalangka: () => import('@/app/components/games/paud/KenalAngka'),
   hitunghewan: () => import('@/app/components/games/paud/HitungHewan'),

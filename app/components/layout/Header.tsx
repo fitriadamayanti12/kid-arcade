@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
+import { CATEGORIES } from '@/lib/gameCatalog';
 
 interface HeaderProps {
   playerName: string;
@@ -12,23 +13,17 @@ interface HeaderProps {
   onLogout: () => void;
   selectedGrade: string;
   onGradeChange: (grade: string) => void;
+  /** hari beruntun main berturut-turut */
+  streak?: number;
 }
 
-const GRADES = [
-  { id: 'all', label: 'Semua', emoji: '🎮', color: '#7c3aed' },
-  { id: 'paud', label: 'PAUD', emoji: '👶', color: '#f59e0b' },
-  { id: 'tk', label: 'TK', emoji: '🎨', color: '#ec4899' },
-  { id: '1', label: 'Kelas 1', emoji: '📚', color: '#10b981' },
-  { id: '2', label: 'Kelas 2', emoji: '✏️', color: '#3b82f6' },
-  { id: '3', label: 'Kelas 3', emoji: '🌟', color: '#8b5cf6' },
-  { id: '4', label: 'Kelas 4', emoji: '🚀', color: '#ef4444' },
-  { id: '5', label: 'Kelas 5', emoji: '💡', color: '#f97316' },
-  { id: '6', label: 'Kelas 6', emoji: '🏆', color: '#06b6d4' },
-];
+// "Semua" + kategori dari katalog game pusat, biar jumlah game & warnanya selalu sinkron
+// dengan grid yang ditampilkan GameSelector.
+const GRADES = [{ id: 'all', label: 'Semua', emoji: '🎮', color: '#7c3aed' }, ...CATEGORIES];
 
 export default function Header({
   playerName, selectedAvatar, soundEnabled, onToggleSound, onLogout,
-  selectedGrade, onGradeChange,
+  selectedGrade, onGradeChange, streak = 0,
 }: HeaderProps) {
   const theme = useThemeStyles();
   const [showGrades, setShowGrades] = useState(false);
@@ -64,6 +59,16 @@ export default function Header({
               Game Matematika Seru!
             </p>
           </div>
+          {streak >= 2 && (
+            <span style={{
+              display: 'flex', alignItems: 'center', gap: '4px',
+              background: d ? '#3b0a0a' : '#fff7ed', color: d ? '#fdba74' : '#c2410c',
+              border: `1px solid ${d ? '#7c2d12' : '#fed7aa'}`,
+              borderRadius: '999px', padding: '5px 12px', fontSize: '13px', fontWeight: 800,
+            }}>
+              🔥 {streak} hari
+            </span>
+          )}
         </div>
 
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>

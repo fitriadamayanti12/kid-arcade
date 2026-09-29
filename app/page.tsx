@@ -21,6 +21,7 @@ export default function Home() {
   const [selectedGame, setSelectedGame] = useState('puzzle');
   const [gameKey, setGameKey] = useState(0);
   const [selectedGrade, setSelectedGrade] = useState('all');
+  const [streak, setStreak] = useState(0);
   const [showSidebar, setShowSidebar] = useState<'progress' | 'leaderboard'>('progress');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showReward, setShowReward] = useState(false);
@@ -39,9 +40,10 @@ export default function Home() {
     if (!name.trim()) return;
     setIsLoading(true); setLoginError('');
     try {
-      const data = await loginPlayer(name.trim());
+      const data: any = await loginPlayer(name.trim());
       setPlayerName(data.username);
       setSelectedAvatar(data.avatar || '👦');
+      setStreak(data.streak || 0);
       setIsLoggedIn(true); playSound('win');
     } catch (error: any) {
       setLoginError(error.message || 'Gagal login');
@@ -49,7 +51,7 @@ export default function Home() {
   };
 
   const handleLogout = () => {
-    setIsLoggedIn(false); setInputName(''); setSelectedGame('puzzle'); setSelectedGrade('all');
+    setIsLoggedIn(false); setInputName(''); setSelectedGame('puzzle'); setSelectedGrade('all'); setStreak(0);
   };
 
   const onGameComplete = (stars: number, extra?: any) => {
@@ -72,12 +74,13 @@ export default function Home() {
           playerName={playerName} selectedAvatar={selectedAvatar}
           soundEnabled={soundEnabled} onToggleSound={() => setSoundEnabled(toggleSound())}
           onLogout={handleLogout} selectedGrade={selectedGrade} onGradeChange={setSelectedGrade}
+          streak={streak}
         />
 
         <GameSelector
           selectedGame={selectedGame}
           onSelectGame={(game) => { setSelectedGame(game); setGameKey(prev => prev + 1); }}
-          playSound={playSound} selectedGrade={selectedGrade}
+          playSound={playSound} selectedGrade={selectedGrade} onGradeChange={setSelectedGrade}
         />
 
         <div className="mt-3 flex flex-col lg:flex-row gap-3 lg:gap-4">
@@ -120,6 +123,10 @@ export default function Home() {
           starsEarned={lastReward.stars}
           newBadge={lastReward.newBadge}
           selectedGrade={selectedGrade}
+          score={lastReward.score}
+          comboBonus={lastReward.comboBonus}
+          leveledUp={lastReward.leveledUp}
+          newLevel={lastReward.newLevel}
           onClose={() => { setShowReward(false); setGameKey(prev => prev + 1); }}
         />
       )}

@@ -76,12 +76,37 @@ export async function loginPlayer(username: string) {
     }
 
     if (existing) {
-      // Player ditemukan - update last played
+      // Player ditemukan - hitung streak harian & update last played
       console.log('👋 Welcome back:', existing.username)
+
+      const toDateStr = (iso: string) => new Date(iso).toISOString().slice(0, 10)
+      const todayStr = new Date().toISOString().slice(0, 10)
+      const lastPlayedStr = existing.last_played_at ? toDateStr(existing.last_played_at) : null
+      const prevStreak = existing.streak || 0
+
+      let newStreak = prevStreak
+      if (lastPlayedStr !== todayStr) {
+        const yesterday = new Date()
+        yesterday.setDate(yesterday.getDate() - 1)
+        newStreak = lastPlayedStr === toDateStr(yesterday.toISOString()) ? prevStreak + 1 : 1
+      }
+
+      const STREAK_MILESTONES = [3, 7, 14, 30, 60, 100]
+      const newStreakBadge = newStreak !== prevStreak && STREAK_MILESTONES.includes(newStreak)
+        ? `🔥 ${newStreak} Hari Beruntun!`
+        : null
+      const updatedBadges = newStreakBadge
+        ? [...(existing.badges || []), newStreakBadge]
+        : (existing.badges || [])
+
       try {
         await supabase
           .from('players')
-          .update({ last_played_at: new Date().toISOString() })
+          .update({
+            last_played_at: new Date().toISOString(),
+            streak: newStreak,
+            badges: updatedBadges,
+          })
           .eq('id', existing.id)
       } catch (e) { /* ignore */ }
 
@@ -97,7 +122,9 @@ export async function loginPlayer(username: string) {
         avatar: existing.avatar || '👦',
         total_stars: existing.total_stars || 0,
         total_games: existing.total_games_played || 0,
-        badges: existing.badges || [],
+        badges: updatedBadges,
+        streak: newStreak,
+        newStreakBadge,
       }
     }
 
@@ -112,7 +139,7 @@ export async function loginPlayer(username: string) {
         badges: [],
         stickers: [],
         avatar: '👦',
-        streak: 0,
+        streak: 1,
         owned_items: [],
         created_at: new Date().toISOString(),
         last_played_at: new Date().toISOString(),
@@ -139,6 +166,8 @@ export async function loginPlayer(username: string) {
       total_stars: 0,
       total_games: 0,
       badges: [],
+      streak: 1,
+      newStreakBadge: null,
     }
 
   } catch (error: any) {
@@ -156,6 +185,8 @@ function createOfflinePlayer(username: string) {
     total_stars: 0,
     total_games: 0,
     badges: [],
+    streak: 1,
+    newStreakBadge: null,
   }
 }
 

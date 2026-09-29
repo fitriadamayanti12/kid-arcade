@@ -30,13 +30,23 @@ export default function ProgressDashboard({ playerName, onAvatarChange }: Props)
         .ilike('username', playerName)
         .single();
 
-      const { data: scores } = await supabase
-        .from('game_scores')
-        .select('stars')
-        .eq('player_name', playerName);
+      // `player.total_stars` sudah agregat yang terus di-update di setiap game selesai
+      // (lihat hooks/useGameComplete.ts), jadi ini SELALU dipakai duluan. Query ke
+      // game_scores di bawah cuma cadangan langka kalau baris `players`-nya sendiri
+      // belum/tidak ada — dan tetap dibatasi (.limit) supaya tidak menarik seluruh
+      // riwayat game setiap 10 detik saat halaman ini polling.
+      let totalStarsFromScores = 0;
+      let totalGamesFromScores = 0;
+      if (!player) {
+        const { data: scores } = await supabase
+          .from('game_scores')
+          .select('stars')
+          .eq('player_name', playerName)
+          .limit(2000);
 
-      const totalStarsFromScores = scores?.reduce((sum: number, s: any) => sum + (s.stars || 0), 0) || 0;
-      const totalGamesFromScores = scores?.length || 0;
+        totalStarsFromScores = scores?.reduce((sum: number, s: any) => sum + (s.stars || 0), 0) || 0;
+        totalGamesFromScores = scores?.length || 0;
+      }
 
       setStats({
         totalStars: player?.total_stars || totalStarsFromScores || 0,

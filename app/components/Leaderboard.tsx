@@ -34,18 +34,48 @@ export default function Leaderboard({ gameType = 'all', limit = 20 }: Leaderboar
     setError(null);
 
     try {
-      let query = supabase
-        .from('game_scores')
-        .select('player_name, stars, score, game_type, completed_at');
-
-      if (gameType !== 'all') query = query.eq('game_type', gameType);
-
-      if (selectedPeriod !== 'all') {
+      const since = (() => {
+        if (selectedPeriod === 'all') return null;
         const date = new Date();
         if (selectedPeriod === 'week') date.setDate(date.getDate() - 7);
         else date.setMonth(date.getMonth() - 1);
-        query = query.gte('completed_at', date.toISOString());
+        return date.toISOString();
+      })();
+
+      // Agregasi (SUM/COUNT/GROUP BY) dikerjakan di database lewat fungsi get_leaderboard
+      // (lihat supabase/performance-indexes.sql) — cuma `limit` baris hasil akhir yang
+      // dikirim lewat jaringan, bukan seluruh isi tabel game_scores.
+      const { data: agg, error: rpcError } = await supabase.rpc('get_leaderboard', {
+        p_game_type: gameType,
+        p_since: since,
+        p_limit: limit,
+      });
+
+      if (!rpcError && agg) {
+        const sorted = agg.map((row: any) => ({
+          player_name: row.player_name,
+          stars: Number(row.stars) || 0,
+          score: Number(row.games) || 0,
+        }));
+        setRankings(sorted);
+        setTotalPlayers(sorted.length);
+        setTotalStars(sorted.reduce((s: number, r: any) => s + r.stars, 0));
+        setTotalGames(sorted.reduce((s: number, r: any) => s + r.score, 0));
+        setLoading(false);
+        return;
       }
+
+      // Fallback kalau fungsi get_leaderboard belum dijalankan di database ini —
+      // sama seperti sebelumnya, ditandai supaya kelihatan di console kalau ini yang kepakai.
+      if (rpcError) console.warn('⚠️ get_leaderboard RPC belum tersedia, pakai cara lama:', rpcError.message);
+
+      let query = supabase
+        .from('game_scores')
+        .select('player_name, stars, score, game_type, completed_at')
+        .limit(2000);
+
+      if (gameType !== 'all') query = query.eq('game_type', gameType);
+      if (since) query = query.gte('completed_at', since);
 
       const { data: scores, error: scoresError } = await query;
 

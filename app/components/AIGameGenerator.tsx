@@ -140,11 +140,12 @@ const generateQuestion = (gameId: string): GameQuestion => {
         { name: 'Hati', emoji: '❤️', color: '#ec4899' },
       ];
       const shape = shapes[Math.floor(Math.random() * shapes.length)];
+      const shapeWrongs = shapes.filter(s => s.name !== shape.name).map(s => s.name).sort(() => Math.random() - 0.5).slice(0, 3);
       return {
         question: 'Bentuk apa ini?',
         display: { type: 'shape' as const, emoji: shape.emoji, color: shape.color },
         answer: shape.name,
-        options: shapes.map(s => s.name).sort(() => Math.random() - 0.5).slice(0, 4),
+        options: [shape.name, ...shapeWrongs].sort(() => Math.random() - 0.5),
         type: 'choice' as const,
         explanation: `Ini adalah ${shape.name} ${shape.emoji}!`
       };
@@ -259,16 +260,29 @@ const generateQuestion = (gameId: string): GameQuestion => {
       const numerator = Math.floor(Math.random() * 3) + 1;
       const denominators = [2, 3, 4, 6, 8];
       const denominator = denominators[Math.floor(Math.random() * denominators.length)];
+      const correct = `${numerator}/${denominator}`;
+      const wrongPool = new Set<string>();
+      const addWrong = (n: number, d: number) => {
+        if (d > 0 && n >= 0) {
+          const s = `${n}/${d}`;
+          if (s !== correct) wrongPool.add(s);
+        }
+      };
+      addWrong(denominator, numerator);
+      addWrong(numerator + 1, denominator);
+      addWrong(Math.max(0, numerator - 1), denominator);
+      addWrong(denominator - numerator, denominator);
+      let guard = 0;
+      while (wrongPool.size < 3 && guard < 30) {
+        guard++;
+        addWrong(Math.floor(Math.random() * (denominator + 1)), denominator);
+      }
+      const wrongs = Array.from(wrongPool).sort(() => Math.random() - 0.5).slice(0, 3);
       return {
         question: 'Bagian yang diarsir menunjukkan pecahan?',
         display: { type: 'fraction-visual' as const, numerator, denominator },
-        answer: `${numerator}/${denominator}`,
-        options: [
-          `${numerator}/${denominator}`,
-          `${denominator}/${numerator}`,
-          `${numerator}/${numerator + 1}`,
-          `${denominator - numerator}/${denominator}`
-        ].sort(() => Math.random() - 0.5),
+        answer: correct,
+        options: [...wrongs, correct].sort(() => Math.random() - 0.5),
         type: 'choice' as const,
         explanation: `${numerator} dari ${denominator} bagian = ${numerator}/${denominator}`
       };
@@ -285,7 +299,7 @@ const generateQuestion = (gameId: string): GameQuestion => {
         question: `${shape.emoji} Bangun apa? Berapa sisinya?`,
         display: { type: 'shape-info' as const, emoji: shape.emoji, name: shape.name },
         answer: shape.sides,
-        options: [shape.sides, shape.sides + 1, Math.max(0, shape.sides - 1), 5]
+        options: [shape.sides, shape.sides + 1, Math.max(0, shape.sides - 1), shape.sides + 2]
           .filter((v, i, a) => a.indexOf(v) === i)
           .sort(() => Math.random() - 0.5),
         type: 'choice' as const,
@@ -329,11 +343,29 @@ const generateQuestion = (gameId: string): GameQuestion => {
       const num1 = Math.floor(Math.random() * 3) + 1;
       const num2 = Math.floor(Math.random() * 3) + 1;
       const numResult = num1 + num2;
+      const correctFrac = `${numResult}/${denom}`;
+      const wrongFracs = new Set<string>();
+      const addWrongFrac = (n: number, d: number) => {
+        if (d > 0 && n >= 0) {
+          const s = `${n}/${d}`;
+          if (s !== correctFrac) wrongFracs.add(s);
+        }
+      };
+      addWrongFrac(numResult, denom * 2);
+      addWrongFrac(numResult + 1, denom);
+      addWrongFrac(Math.max(0, numResult - 1), denom);
+      addWrongFrac(denom, numResult || 1);
+      let fracGuard = 0;
+      while (wrongFracs.size < 3 && fracGuard < 30) {
+        fracGuard++;
+        addWrongFrac(Math.max(0, numResult + Math.floor(Math.random() * 5) - 2), denom);
+      }
+      const fracWrongs = Array.from(wrongFracs).sort(() => Math.random() - 0.5).slice(0, 3);
       return {
         question: `${num1}/${denom} + ${num2}/${denom} = ?`,
         display: { type: 'fraction-op' as const, expr: `${num1}/${denom} + ${num2}/${denom}` },
-        answer: `${numResult}/${denom}`,
-        options: [`${numResult}/${denom}`, `${num1 + num2}/${denom + denom}`, `${num1 + num2}/${denom * 2}`, `${numResult + 1}/${denom}`],
+        answer: correctFrac,
+        options: [...fracWrongs, correctFrac].sort(() => Math.random() - 0.5),
         type: 'choice' as const,
         hint: `Penyebut sudah sama: ${denom}`,
         explanation: `${num1}/${denom} + ${num2}/${denom} = ${num1 + num2}/${denom} = ${numResult}/${denom}`
@@ -515,7 +547,9 @@ export default function AIGameGenerator({ playerName, onComplete }: AIGameGenera
   };
 
   const nextQuestion = () => {
-    const finalScore = isCorrect ? score + 1 : score;
+    // `score` di sini sudah termasuk poin jawaban barusan (state sudah ter-update
+    // sebelum tombol ini bisa diklik) — jangan ditambah lagi, atau bintang akhir jadi kelebihan hitung.
+    const finalScore = score;
     if (questionNum >= TOTAL_QUESTIONS - 1) {
       const stars = finalScore >= 9 ? 3 : finalScore >= 7 ? 2 : finalScore >= 4 ? 1 : 0;
       onComplete(stars, { 

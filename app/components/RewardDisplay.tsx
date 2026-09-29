@@ -10,6 +10,10 @@ interface RewardProps {
   newBadge?: string;
   newSticker?: string;
   selectedGrade?: string;
+  score?: number;
+  comboBonus?: number;
+  leveledUp?: boolean;
+  newLevel?: number;
   onClose: () => void;
 }
 
@@ -86,7 +90,8 @@ const playClapSound = () => {
 };
 
 export default function RewardDisplay({ 
-  playerName, starsEarned, newBadge, newSticker, selectedGrade = 'all', onClose 
+  playerName, starsEarned, newBadge, newSticker, selectedGrade = 'all',
+  score, comboBonus = 0, leveledUp = false, newLevel, onClose 
 }: RewardProps) {
   const theme = useThemeStyles();
   const [show, setShow] = useState(false);
@@ -141,6 +146,21 @@ export default function RewardDisplay({
         <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#fff', marginBottom: '2px' }}>{playerName}!</h2>
         <div style={{ fontSize: '36px', marginBottom: '12px' }}>{starsVisual}</div>
 
+        {leveledUp && (
+          <div style={{
+            background: 'linear-gradient(135deg, #f59e0b, #fbbf24)', borderRadius: '16px',
+            padding: '10px', marginBottom: '12px', animation: 'pop 0.5s ease-out',
+            boxShadow: '0 4px 14px rgba(245,158,11,0.5)',
+          }}>
+            <p style={{ fontSize: '13px', fontWeight: '800', color: '#78350f', margin: 0, letterSpacing: '0.5px' }}>
+              🆙 NAIK LEVEL!
+            </p>
+            <p style={{ fontSize: '20px', fontWeight: '900', color: '#78350f', margin: '2px 0 0' }}>
+              Level {newLevel}! 🎉
+            </p>
+          </div>
+        )}
+
         <div style={{ background: 'rgba(255,255,255,0.2)', borderRadius: '16px', padding: '16px', marginBottom: '16px', border: '1px solid rgba(255,255,255,0.3)' }}>
           <p style={{ fontSize: '18px', fontWeight: '700', color: '#fff', lineHeight: 1.5, margin: 0, fontStyle: 'italic' }}>"{randomPraise}"</p>
         </div>
@@ -167,10 +187,15 @@ export default function RewardDisplay({
           </div>
         )}
 
-        <div style={{ marginBottom: '16px' }}>
+        <div style={{ marginBottom: '16px', display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
           <span style={{ background: 'rgba(255,255,255,0.25)', borderRadius: '20px', padding: '6px 16px', fontSize: '15px', fontWeight: '700', color: '#fff' }}>
-            +{starsEarned * 10} Poin ⭐
+            +{score ?? starsEarned * 10} Poin ⭐
           </span>
+          {comboBonus > 0 && (
+            <span style={{ background: 'rgba(251,191,36,0.35)', borderRadius: '20px', padding: '6px 16px', fontSize: '13px', fontWeight: '700', color: '#fff' }}>
+              🔥 +{comboBonus} Bonus Kombo
+            </span>
+          )}
         </div>
 
         <button onClick={onClose} style={{

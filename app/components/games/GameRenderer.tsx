@@ -13,7 +13,7 @@ interface GameRendererProps {
 }
 
 // Game yang butuh playerName prop
-const NEEDS_PLAYER_NAME = ['memory', 'bubble', 'wordmatch', 'fillblanks', 'aigame'];
+const NEEDS_PLAYER_NAME = ['memory', 'bubble', 'wordmatch', 'fillblanks', 'aigame', 'catchup1', 'kalikilat3', 'master6', 'sprintkali'];
 
 export default function GameRenderer({ 
   selectedGame, 
