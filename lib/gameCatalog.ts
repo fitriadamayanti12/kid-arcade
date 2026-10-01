@@ -82,6 +82,8 @@ export const games: GameItem[] = [
   { id: 'wordmatch', label: '📖 Word Match', color: '#ccfbf1', textColor: '#134e4a', grade: '1', difficulty: 2 },
 
   // ========== Kelas 2 ==========
+  { id: 'jamberdetak', label: '🕐 Jam Berdetak', color: '#cffafe', textColor: '#155e75', grade: '2', difficulty: 1, isNew: true },
+  { id: 'pasaruang', label: '🛍️ Pasar Uang', color: '#d1fae5', textColor: '#065f46', grade: '2', difficulty: 2, isNew: true },
   { id: 'super2', label: '👑 Kerajaan Perkalian', color: '#dbeafe', textColor: '#1e40af', grade: '2', difficulty: 2, isHot: true, isNew: true },
   { id: 'tambahcepat', label: '➕ Tambah Cepat', color: '#dbeafe', textColor: '#1e40af', grade: '2', difficulty: 1 },
   { id: 'kurangcepat', label: '➖ Kurang Cepat', color: '#fee2e2', textColor: '#991b1b', grade: '2', difficulty: 1 },
@@ -116,6 +118,8 @@ export const games: GameItem[] = [
   { id: 'bubble', label: '🎈 Bubble Math', color: '#d1fae5', textColor: '#065f46', grade: '3', difficulty: 2 },
 
   // ========== Kelas 4 ==========
+  { id: 'arenakelilingluas', label: '📐 Arena Keliling & Luas', color: '#dbeafe', textColor: '#1e40af', grade: '4', difficulty: 2, isNew: true },
+  { id: 'arenapembulatan', label: '🔢 Arena Pembulatan', color: '#ffedd5', textColor: '#9a3412', grade: '4', difficulty: 2, isNew: true },
   { id: 'super4', label: '🗝️ Dungeon Pecahan & KPK', color: '#fee2e2', textColor: '#991b1b', grade: '4', difficulty: 3, isHot: true, isNew: true },
   { id: 'pecahan4', label: '🍕 Pecahan 4', color: '#fef3c7', textColor: '#92400e', grade: '4', difficulty: 2 },
   { id: 'desimalfun', label: '🔢 Desimal Fun', color: '#cffafe', textColor: '#155e75', grade: '4', difficulty: 2 },
@@ -127,6 +131,7 @@ export const games: GameItem[] = [
   { id: 'mathracer4', label: '🏎️ Racer 4', color: '#fee2e2', textColor: '#991b1b', grade: '4', difficulty: 3 },
 
   // ========== Kelas 5 ==========
+  { id: 'detektifratarata', label: '📊 Detektif Rata-Rata', color: '#ede9fe', textColor: '#5b21b6', grade: '5', difficulty: 2, isNew: true },
   { id: 'super5', label: '🏅 Olimpiade Arena', color: '#ffedd5', textColor: '#9a3412', grade: '5', difficulty: 3, isHot: true, isNew: true },
   { id: 'pecahan5', label: '🍕 Pecahan 5', color: '#fef3c7', textColor: '#92400e', grade: '5', difficulty: 2 },
   { id: 'volumekubus', label: '📦 Volume', color: '#dbeafe', textColor: '#1e40af', grade: '5', difficulty: 3 },

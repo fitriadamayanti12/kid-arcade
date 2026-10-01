@@ -116,11 +116,25 @@ export default function RodaKali({ onComplete }: Props) {
             {TABLES.map((t, i) => {
               const angle = i * SEG + SEG / 2;
               const rad = (angle * Math.PI) / 180;
-              const r = 95;
-              const x = 130 + r * Math.sin(rad) - 10;
-              const y = 130 - r * Math.cos(rad) - 10;
+              const r = 92;
+              const x = 130 + r * Math.sin(rad) - 14;
+              const y = 130 - r * Math.cos(rad) - 11;
               return (
-                <span key={t} style={{ position: 'absolute', left: `${x}px`, top: `${y}px`, width: '20px', textAlign: 'center', fontWeight: 900, color: '#fff', fontSize: '15px', textShadow: '0 1px 3px rgba(0,0,0,0.4)' }}>
+                <span
+                  key={t}
+                  style={{
+                    position: 'absolute',
+                    left: `${x}px`,
+                    top: `${y}px`,
+                    width: '28px',
+                    textAlign: 'center',
+                    whiteSpace: 'nowrap',
+                    fontWeight: 900,
+                    color: '#fff',
+                    fontSize: '17px',
+                    textShadow: '0 1px 3px rgba(0,0,0,0.4)',
+                  }}
+                >
                   {t}
                 </span>
               );

@@ -74,17 +74,17 @@ export default function Header({
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <button onClick={toggleDark} style={{
             background: d ? '#fbbf24' : '#334155', color: d ? '#000' : '#fff',
-            border: 'none', borderRadius: '12px', width: '40px', height: '40px', fontSize: '18px', cursor: 'pointer',
+            border: 'none', borderRadius: '12px', width: '46px', height: '46px', fontSize: '19px', cursor: 'pointer',
           }}>{d ? '☀️' : '🌙'}</button>
 
           <button onClick={onToggleSound} style={{
             background: d ? '#334155' : '#f1f5f9', border: 'none',
-            borderRadius: '12px', width: '40px', height: '40px', fontSize: '18px', cursor: 'pointer',
+            borderRadius: '12px', width: '46px', height: '46px', fontSize: '19px', cursor: 'pointer',
           }}>{soundEnabled ? '🔊' : '🔇'}</button>
 
           <button onClick={onLogout} style={{
             background: d ? '#3b0a0a' : '#fee2e2', color: d ? '#fca5a5' : '#991b1b',
-            border: 'none', borderRadius: '12px', padding: '8px 12px', fontSize: '14px', fontWeight: '600', cursor: 'pointer',
+            border: 'none', borderRadius: '12px', width: '46px', height: '46px', fontSize: '18px', fontWeight: '600', cursor: 'pointer',
           }}>🚪</button>
         </div>
       </div>
@@ -95,7 +95,7 @@ export default function Header({
           background: selectedGrade !== 'all' ? currentGrade?.color : d ? '#1e293b' : '#ffffff',
           color: selectedGrade !== 'all' ? '#fff' : d ? '#e2e8f0' : '#1e293b',
           border: selectedGrade !== 'all' ? 'none' : `1px solid ${d ? '#334155' : '#e2e8f0'}`,
-          borderRadius: '14px', padding: '10px 18px', fontSize: '14px', fontWeight: '700',
+          borderRadius: '14px', padding: '12px 18px', fontSize: '14.5px', fontWeight: '700',
           cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
           boxShadow: selectedGrade !== 'all' ? `0 2px 8px ${currentGrade?.color}40` : 'none',
         }}>
@@ -117,7 +117,7 @@ export default function Header({
                   background: isActive ? grade.color : d ? '#334155' : '#ffffff',
                   color: isActive ? '#fff' : d ? '#e2e8f0' : '#1e293b',
                   border: isActive ? `2px solid ${grade.color}` : `1px solid ${d ? '#475569' : '#e2e8f0'}`,
-                  borderRadius: '20px', padding: '8px 14px', fontSize: '13px', fontWeight: '600',
+                  borderRadius: '20px', padding: '11px 16px', fontSize: '14px', fontWeight: '600',
                   cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
                   boxShadow: isActive ? `0 2px 8px ${grade.color}40` : 'none',
                   transform: isActive ? 'scale(1.05)' : 'scale(1)',

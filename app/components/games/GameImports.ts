@@ -3,7 +3,7 @@ import dynamic from 'next/dynamic';
 import { ComponentType } from 'react';
 
 // ============================================
-// GAME REGISTRY - ALL 78+ GAMES
+// GAME REGISTRY - ALL 100 GAMES
 // ============================================
 const GAME_REGISTRY: Record<string, any> = {
   // ========== 🏅 GAME PENALARAN OLIMPIADE KELAS 1 (pola, perbandingan, kombinatorik, deduksi) ==========
@@ -17,6 +17,13 @@ const GAME_REGISTRY: Record<string, any> = {
   tembakjawaban: () => import('@/app/components/games/kelas3/TembakJawaban'),
   kartuberpasangan: () => import('@/app/components/games/kelas3/KartuBerpasangan'),
   rodakali: () => import('@/app/components/games/kelas3/RodaKali'),
+
+  // ========== 💯 5 GAME TAMBAHAN MENUJU 100 (Kelas 2, 4, 5) ==========
+  jamberdetak: () => import('@/app/components/games/kelas2/JamBerdetak'),
+  pasaruang: () => import('@/app/components/games/kelas2/PasarUang'),
+  arenakelilingluas: () => import('@/app/components/games/kelas4/ArenaKelilingLuas'),
+  arenapembulatan: () => import('@/app/components/games/kelas4/ArenaPembulatan'),
+  detektifratarata: () => import('@/app/components/games/kelas5/DetektifRataRata'),
 
   // ========== 🎯 GAME PENGUASAAN (latihan adaptif + pembahasan langkah demi langkah) ==========
   catchup1: () => import('@/app/components/games/kelas1/JagoanBerhitung'),

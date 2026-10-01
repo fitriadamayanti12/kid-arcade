@@ -37,7 +37,7 @@ export default function GameSelector({
         <p
           style={{
             textAlign: 'center',
-            fontSize: '13px',
+            fontSize: '14px',
             fontWeight: 700,
             color: theme.textSecondary,
             marginBottom: '10px',
@@ -49,7 +49,7 @@ export default function GameSelector({
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(84px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(96px, 1fr))',
             gap: '10px',
           }}
         >
@@ -123,8 +123,8 @@ export default function GameSelector({
             background: 'transparent',
             border: `1px solid ${theme.border}`,
             borderRadius: '12px',
-            padding: '7px 12px',
-            fontSize: '13px',
+            padding: '11px 16px',
+            fontSize: '14px',
             fontWeight: 700,
             color: theme.textSecondary,
             cursor: 'pointer',
@@ -139,12 +139,12 @@ export default function GameSelector({
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              fontSize: '13px',
+              fontSize: '14px',
               fontWeight: 800,
               color: '#fff',
               background: cat.color,
               borderRadius: '999px',
-              padding: '6px 14px',
+              padding: '9px 16px',
             }}
           >
             {cat.emoji} {cat.label}
@@ -160,7 +160,7 @@ export default function GameSelector({
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(128px, 1fr))',
             gap: '10px',
           }}
         >

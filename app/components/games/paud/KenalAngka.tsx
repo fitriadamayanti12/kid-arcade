@@ -16,9 +16,9 @@ const NUMBERS = [
   { n: 5, emoji: '🖐️', dots: '⚫⚫⚫⚫⚫', objects: '🐤🐤🐤🐤🐤' },
   { n: 6, emoji: '🤙', dots: '⚫⚫⚫⚫⚫⚫', objects: '🐤🐤🐤🐤🐤🐤' },
   { n: 7, emoji: '✋', dots: '⚫⚫⚫⚫⚫⚫⚫', objects: '🐤🐤🐤🐤🐤🐤🐤' },
-  { n: 8, emoji: '🖐️✌️', dots: '⚫×8', objects: '🐤×8' },
-  { n: 9, emoji: '🖐️🖖', dots: '⚫×9', objects: '🐤×9' },
-  { n: 10, emoji: '🙌', dots: '⚫×10', objects: '🐤×10' },
+  { n: 8, emoji: '🖐️✌️', dots: '⚫'.repeat(8), objects: '🐤'.repeat(8) },
+  { n: 9, emoji: '🖐️🖖', dots: '⚫'.repeat(9), objects: '🐤'.repeat(9) },
+  { n: 10, emoji: '🙌', dots: '⚫'.repeat(10), objects: '🐤'.repeat(10) },
 ];
 
 export default function KenalAngka({ onComplete }: Props) {
