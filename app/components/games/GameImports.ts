@@ -3,7 +3,7 @@ import dynamic from 'next/dynamic';
 import { ComponentType } from 'react';
 
 // ============================================
-// GAME REGISTRY - ALL 78+ GAMES
+// GAME REGISTRY - ALL 80+ GAMES
 // ============================================
 const GAME_REGISTRY: Record<string, any> = {
   // ========== 🏅 GAME PENALARAN OLIMPIADE KELAS 1 (pola, perbandingan, kombinatorik, deduksi) ==========
@@ -11,6 +11,11 @@ const GAME_REGISTRY: Record<string, any> = {
   timbanganajaib: () => import('@/app/components/games/kelas1/TimbanganAjaib'),
   kotakkombinasi: () => import('@/app/components/games/kelas1/KotakKombinasi'),
   detektifangka: () => import('@/app/components/games/kelas1/DetektifAngka'),
+
+  // ========== 🔗 GAME NUMBER BONDS, SUBITIZING & POLA KELAS 1 ==========
+  pasanganpintar: () => import('@/app/components/games/kelas1/PasanganPintar'),
+  tebakcepat: () => import('@/app/components/games/kelas1/TebakCepat'),
+  detektifpola: () => import('@/app/components/games/kelas1/DetektifPola'),
 
   // ========== 🚀 GAME KILAT PERKALIAN KELAS 3 (sesi super pendek, minim klik, buat anak pemalas) ==========
   sprintkali: () => import('@/app/components/games/kelas3/SprintKali60'),
@@ -72,9 +77,9 @@ const GAME_REGISTRY: Record<string, any> = {
   thinkingblocks: () => import('@/app/components/games/kelas3/ThinkingBlocks'),
   placevaluequest: () => import('@/app/components/games/kelas3/PlaceValueQuest'),
   timestablehero: () => import('@/app/components/games/kelas3/TimesTableHero'),
-  measurequest: () => import('@/app/components/games/kelas3/MeasureQuest'), // 👈 BARU
-  shapeland: () => import('@/app/components/games/kelas3/ShapeLand'), // 👈 BARU
-  moneysmart: () => import('@/app/components/games/kelas3/MoneySmart'), // 👈 BARU
+  measurequest: () => import('@/app/components/games/kelas3/MeasureQuest'),
+  shapeland: () => import('@/app/components/games/kelas3/ShapeLand'),
+  moneysmart: () => import('@/app/components/games/kelas3/MoneySmart'),
 
   // ========== Kelas 4 ==========
   pecahan4: () => import('@/app/components/games/kelas4/Pecahan4'),
@@ -135,7 +140,7 @@ const GAME_REGISTRY: Record<string, any> = {
 export const GameComponents: Record<string, ComponentType<any>> = {};
 
 Object.entries(GAME_REGISTRY).forEach(([id, importFn]) => {
-  GameComponents[id] = dynamic(importFn, { 
+  GameComponents[id] = dynamic(importFn, {
     ssr: false,
     loading: () => null,
   });

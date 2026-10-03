@@ -46,7 +46,9 @@ export function gradeLabel(grade: string): string {
 }
 
 export const games: GameItem[] = [
-  // ========== PAUD ==========
+  // ============================================
+  // 👶 PAUD
+  // ============================================
   { id: 'superpaud', label: '🌻 Kebun Angka Ajaib', color: '#fef3c7', textColor: '#92400e', grade: 'paud', difficulty: 1, isHot: true, isNew: true },
   { id: 'kenalangka', label: '🌟 Kenal Angka', color: '#fef3c7', textColor: '#92400e', grade: 'paud', difficulty: 1 },
   { id: 'hitunghewan', label: '🐮 Hitung Hewan', color: '#d1fae5', textColor: '#065f46', grade: 'paud', difficulty: 1 },
@@ -54,7 +56,9 @@ export const games: GameItem[] = [
   { id: 'besarkecil', label: '🐘 Besar Kecil', color: '#ede9fe', textColor: '#5b21b6', grade: 'paud', difficulty: 1 },
   { id: 'cocokangka', label: '🎯 Cocok Angka', color: '#e0f2fe', textColor: '#075985', grade: 'paud', difficulty: 1 },
 
-  // ========== TK ==========
+  // ============================================
+  // 🎨 TK
+  // ============================================
   { id: 'supertk', label: '🏰 Petualangan Angka', color: '#fce7f3', textColor: '#9d174d', grade: 'tk', difficulty: 1, isHot: true, isNew: true },
   { id: 'tambahsederhana', label: '➕ Tambah Asyik', color: '#d1fae5', textColor: '#065f46', grade: 'tk', difficulty: 1 },
   { id: 'kurangseru', label: '➖ Kurang Seru', color: '#fee2e2', textColor: '#991b1b', grade: 'tk', difficulty: 1 },
@@ -63,15 +67,27 @@ export const games: GameItem[] = [
   { id: 'pologambar', label: '🧩 Pola Gambar', color: '#fce7f3', textColor: '#9d174d', grade: 'tk', difficulty: 1 },
   { id: 'countobjects', label: '🔵 Hitung Benda', color: '#dbeafe', textColor: '#1e40af', grade: 'tk', difficulty: 1 },
 
-  // ========== Kelas 1 ==========
+  // ============================================
+  // 📚 KELAS 1
+  // ============================================
+  // 🔥 Game unggulan (Super / Olimpiade)
+  { id: 'super1', label: '⚔️ Arena Hitung Super', color: '#d1fae5', textColor: '#065f46', grade: '1', difficulty: 2, isHot: true, isNew: true },
+  { id: 'detektifangka', label: '🔍 Detektif Angka', color: '#fee2e2', textColor: '#991b1b', grade: '1', difficulty: 3, isNew: true, isHot: true },
   { id: 'polalogika', label: '🧩 Pola & Logika', color: '#d1fae5', textColor: '#065f46', grade: '1', difficulty: 2, isNew: true },
   { id: 'timbanganajaib', label: '⚖️ Timbangan Ajaib', color: '#fef3c7', textColor: '#92400e', grade: '1', difficulty: 2, isNew: true },
   { id: 'kotakkombinasi', label: '📦 Kotak Kombinasi', color: '#ede9fe', textColor: '#5b21b6', grade: '1', difficulty: 2, isNew: true },
-  { id: 'detektifangka', label: '🔍 Detektif Angka', color: '#fee2e2', textColor: '#991b1b', grade: '1', difficulty: 3, isNew: true, isHot: true },
+
+  // 🆕 Game baru — Number Bonds, Subitizing, Pola Visual
+  { id: 'pasanganpintar', label: '🔗 Pasangan Pintar', color: '#dbeafe', textColor: '#1e40af', grade: '1', difficulty: 1, isNew: true, isHot: true },
+  { id: 'tebakcepat', label: '👀 Tebak Cepat', color: '#ffedd5', textColor: '#9a3412', grade: '1', difficulty: 1, isNew: true, isHot: true },
+  { id: 'detektifpola', label: '🔍 Detektif Pola', color: '#cffafe', textColor: '#155e75', grade: '1', difficulty: 2, isNew: true },
+
+  // 🎯 Mastery & dasar berhitung
   { id: 'catchup1', label: '🚀 Jagoan Berhitung', color: '#d1fae5', textColor: '#065f46', grade: '1', difficulty: 1, isHot: true },
-  { id: 'super1', label: '⚔️ Arena Hitung Super', color: '#d1fae5', textColor: '#065f46', grade: '1', difficulty: 2, isHot: true, isNew: true },
   { id: 'tambahasyik', label: '➕ Tambah Cepat', color: '#dbeafe', textColor: '#1e40af', grade: '1', difficulty: 1 },
   { id: 'kurangseru1', label: '➖ Kurang Cepat', color: '#fee2e2', textColor: '#991b1b', grade: '1', difficulty: 1 },
+
+  // 📐 Materi Kelas 1
   { id: 'jamwaktu', label: '🕐 Jam & Waktu', color: '#cffafe', textColor: '#155e75', grade: '1', difficulty: 2 },
   { id: 'bangundatar', label: '🔺 Bangun Datar', color: '#ede9fe', textColor: '#5b21b6', grade: '1', difficulty: 1 },
   { id: 'uangsaku', label: '💵 Uang Saku', color: '#d1fae5', textColor: '#065f46', grade: '1', difficulty: 2 },
@@ -81,7 +97,9 @@ export const games: GameItem[] = [
   { id: 'puzzle', label: '🧩 Puzzle Math', color: '#ffedd5', textColor: '#9a3412', grade: '1', difficulty: 2 },
   { id: 'wordmatch', label: '📖 Word Match', color: '#ccfbf1', textColor: '#134e4a', grade: '1', difficulty: 2 },
 
-  // ========== Kelas 2 ==========
+  // ============================================
+  // ✏️ KELAS 2
+  // ============================================
   { id: 'super2', label: '👑 Kerajaan Perkalian', color: '#dbeafe', textColor: '#1e40af', grade: '2', difficulty: 2, isHot: true, isNew: true },
   { id: 'tambahcepat', label: '➕ Tambah Cepat', color: '#dbeafe', textColor: '#1e40af', grade: '2', difficulty: 1 },
   { id: 'kurangcepat', label: '➖ Kurang Cepat', color: '#fee2e2', textColor: '#991b1b', grade: '2', difficulty: 1 },
@@ -92,7 +110,9 @@ export const games: GameItem[] = [
   { id: 'magictable', label: '🌟 Tabel Ajaib', color: '#fef3c7', textColor: '#92400e', grade: '2', difficulty: 2 },
   { id: 'fillblanks', label: '✏️ Fill Blanks', color: '#ccfbf1', textColor: '#134e4a', grade: '2', difficulty: 2 },
 
-  // ========== Kelas 3 ==========
+  // ============================================
+  // 🌟 KELAS 3
+  // ============================================
   { id: 'sprintkali', label: '⚡ Sprint Kali 60 Detik', color: '#fef3c7', textColor: '#92400e', grade: '3', difficulty: 2, isNew: true, isHot: true },
   { id: 'tembakjawaban', label: '🎯 Tembak Jawaban', color: '#dbeafe', textColor: '#1e40af', grade: '3', difficulty: 2, isNew: true },
   { id: 'kartuberpasangan', label: '🎴 Kartu Berpasangan', color: '#ede9fe', textColor: '#5b21b6', grade: '3', difficulty: 1, isNew: true },
@@ -115,7 +135,9 @@ export const games: GameItem[] = [
   { id: 'multblitz', label: '⚡ Blitz Perkalian', color: '#fef3c7', textColor: '#92400e', grade: '3', difficulty: 3 },
   { id: 'bubble', label: '🎈 Bubble Math', color: '#d1fae5', textColor: '#065f46', grade: '3', difficulty: 2 },
 
-  // ========== Kelas 4 ==========
+  // ============================================
+  // 🚀 KELAS 4
+  // ============================================
   { id: 'super4', label: '🗝️ Dungeon Pecahan & KPK', color: '#fee2e2', textColor: '#991b1b', grade: '4', difficulty: 3, isHot: true, isNew: true },
   { id: 'pecahan4', label: '🍕 Pecahan 4', color: '#fef3c7', textColor: '#92400e', grade: '4', difficulty: 2 },
   { id: 'desimalfun', label: '🔢 Desimal Fun', color: '#cffafe', textColor: '#155e75', grade: '4', difficulty: 2 },
@@ -126,7 +148,9 @@ export const games: GameItem[] = [
   { id: 'timer', label: '⏱️ Timer', color: '#fee2e2', textColor: '#991b1b', grade: '4', difficulty: 2 },
   { id: 'mathracer4', label: '🏎️ Racer 4', color: '#fee2e2', textColor: '#991b1b', grade: '4', difficulty: 3 },
 
-  // ========== Kelas 5 ==========
+  // ============================================
+  // 💡 KELAS 5
+  // ============================================
   { id: 'super5', label: '🏅 Olimpiade Arena', color: '#ffedd5', textColor: '#9a3412', grade: '5', difficulty: 3, isHot: true, isNew: true },
   { id: 'pecahan5', label: '🍕 Pecahan 5', color: '#fef3c7', textColor: '#92400e', grade: '5', difficulty: 2 },
   { id: 'volumekubus', label: '📦 Volume', color: '#dbeafe', textColor: '#1e40af', grade: '5', difficulty: 3 },
@@ -137,7 +161,9 @@ export const games: GameItem[] = [
   { id: 'mathdetective', label: '🔍 Detektif', color: '#e0e7ff', textColor: '#3730a3', grade: '5', difficulty: 3 },
   { id: 'mathscrabble', label: '🔤 Scrabble', color: '#ccfbf1', textColor: '#134e4a', grade: '5', difficulty: 2 },
 
-  // ========== Kelas 6 ==========
+  // ============================================
+  // 🏆 KELAS 6
+  // ============================================
   { id: 'master6', label: '🎓 Master FPB KPK Pecahan Ruang', color: '#cffafe', textColor: '#155e75', grade: '6', difficulty: 3, isHot: true },
   { id: 'super6', label: '🏆 Kejuaraan Matematika', color: '#cffafe', textColor: '#155e75', grade: '6', difficulty: 3, isHot: true, isNew: true },
   { id: 'lingkaranmaster', label: '⭕ Lingkaran', color: '#cffafe', textColor: '#155e75', grade: '6', difficulty: 3 },
@@ -156,7 +182,9 @@ export const games: GameItem[] = [
   { id: 'geoquest', label: '📐 GeoQuest', color: '#ede9fe', textColor: '#5b21b6', grade: '6', difficulty: 3 },
   { id: 'bangunyuk', label: '🏠 Bangun Yuk', color: '#d1fae5', textColor: '#065f46', grade: '6', difficulty: 2 },
 
-  // ========== Semua Kelas ==========
+  // ============================================
+  // 🌐 SEMUA KELAS
+  // ============================================
   { id: 'aigame', label: '🤖 AI Game', color: '#ede9fe', textColor: '#5b21b6', grade: 'all', difficulty: 2, isHot: true },
 ];
 
