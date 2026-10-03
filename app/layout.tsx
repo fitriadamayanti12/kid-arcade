@@ -1,3 +1,4 @@
+// app/layout.tsx
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -8,13 +9,13 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Kid Arcade - 76 Game Matematika Seru & Gratis untuk PAUD-SD!',
-  description: 'Koleksi 76 game edukasi matematika GRATIS. Powered by Next Generation Ecosystem.',
-  keywords: 'game matematika, belajar matematika SD, game edukasi anak, Next Generation Ecosystem',
+  title: 'Kid Arcade - 100 Game Matematika Seru & Gratis untuk PAUD-SD!',
+  description: 'Koleksi 100 game edukasi matematika GRATIS. Powered by Next Generation Ecosystem.',
+  keywords: 'game matematika, belajar matematika SD, game edukasi anak, 100 game matematika, Next Generation Ecosystem',
   authors: [{ name: 'Kid Arcade Team', url: 'https://xgeneration.netlify.app' }],
   robots: 'index, follow',
   openGraph: {
-    title: 'Kid Arcade - 76 Game Matematika Seru untuk Anak!',
+    title: 'Kid Arcade - 100 Game Matematika Seru untuk Anak!',
     description: 'Game edukasi matematika GRATIS. Powered by Next Generation Ecosystem.',
     type: 'website', locale: 'id_ID', siteName: 'Kid Arcade',
   },

@@ -15,6 +15,8 @@ export interface PowerQuestion {
   visual?: string;
   answer: number | string;
   options: (number | string)[];
+  /** opsional: petunjuk strategi yang muncul SETELAH anak menjawab */
+  hint?: string;
 }
 
 // ---- helper kecil dipakai bersama oleh semua game "Super" ----
@@ -22,8 +24,14 @@ export function randInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+/** Fisher-Yates shuffle — lebih adil dari sort(() => Math.random() - 0.5) */
 export function shuffleArr<T>(arr: T[]): T[] {
-  return [...arr].sort(() => Math.random() - 0.5);
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }
 
 /** Bikin 4 opsi angka (1 jawaban benar + pengecoh unik di sekitar jawaban) */
@@ -73,8 +81,10 @@ export default function PowerBattle({
   const [selected, setSelected] = useState<number | string | null>(null);
   const [isCorrect, setIsCorrect] = useState(false);
   const [gameOver, setGameOver] = useState(false);
+  const [isBossResult, setIsBossResult] = useState(false);
 
   const finishedRef = useRef(false);
+  const lastPromptRef = useRef<string>('');
   const isBoss = round === totalRounds - 1;
 
   const tierFor = (r: number): 1 | 2 | 3 => {
@@ -84,11 +94,21 @@ export default function PowerBattle({
     return 3;
   };
 
+  // Generate soal baru setiap ganti ronde, dengan anti-duplikat
   useEffect(() => {
     if (gameOver) return;
-    setQuestion(generateQuestion(round, tierFor(round)));
+    let newQ = generateQuestion(round, tierFor(round));
+    let guard = 0;
+    // Kalau prompt sama dengan soal sebelumnya, coba lagi (max 5x)
+    while (newQ.prompt === lastPromptRef.current && guard < 5) {
+      newQ = generateQuestion(round, tierFor(round));
+      guard++;
+    }
+    lastPromptRef.current = newQ.prompt;
+    setQuestion(newQ);
     setHiddenOptions([]);
     setSelected(null);
+    setIsCorrect(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [round]);
 
@@ -98,16 +118,19 @@ export default function PowerBattle({
       finishedRef.current = true;
       const accuracy = roundsPlayed > 0 ? Math.round((finalCorrect / roundsPlayed) * 100) : 0;
       const stars = accuracy >= 85 ? 3 : accuracy >= 60 ? 2 : 1;
+      setIsBossResult(bossCleared);
       setGameOver(true);
       playSound(stars === 3 ? 'win' : 'reward');
       setTimeout(() => {
         onComplete(stars, {
           score: finalScore,
           streak: finalBest,
+          maxCombo: finalBest,   // agar useGameComplete bisa hitung bonus kombo
           total: totalRounds,
           correctAnswers: finalCorrect,
           accuracy,
           bossCleared,
+          roundsPlayed,
         });
       }, 1200);
     },
@@ -171,6 +194,7 @@ export default function PowerBattle({
   if (!question) return null;
 
   const comboFire = combo >= 8 ? '🔥🔥🔥' : combo >= 4 ? '🔥🔥' : combo >= 2 ? '🔥' : '';
+  const showHint = selected !== null && !!question.hint;
 
   return (
     <div style={{ padding: '4px', maxWidth: '560px', margin: '0 auto' }}>
@@ -210,7 +234,9 @@ export default function PowerBattle({
           style={{
             width: `${(Math.min(round + 1, totalRounds) / totalRounds) * 100}%`,
             height: '100%',
-            background: isBoss ? 'linear-gradient(90deg,#ef4444,#f59e0b)' : `linear-gradient(90deg, ${themeColor}, ${themeColor}aa)`,
+            background: isBoss
+              ? 'linear-gradient(90deg,#ef4444,#f59e0b)'
+              : `linear-gradient(90deg, ${themeColor}, ${themeColor}aa)`,
             transition: 'width 0.4s',
           }}
         />
@@ -264,7 +290,15 @@ export default function PowerBattle({
             }}
           >
             {question.visual && (
-              <div style={{ fontSize: '30px', letterSpacing: '4px', marginBottom: '10px', lineHeight: 1.3, whiteSpace: 'pre-line' }}>
+              <div
+                style={{
+                  fontSize: '30px',
+                  letterSpacing: '4px',
+                  marginBottom: '10px',
+                  lineHeight: 1.3,
+                  whiteSpace: 'pre-line',
+                }}
+              >
                 {question.visual}
               </div>
             )}
@@ -282,12 +316,31 @@ export default function PowerBattle({
             </h3>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', maxWidth: '360px', margin: '0 auto' }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '10px',
+              maxWidth: '360px',
+              margin: '0 auto',
+            }}
+          >
             {question.options.map((opt, i) => {
               if (hiddenOptions.includes(opt)) {
                 return <div key={i} style={{ visibility: 'hidden' }} />;
               }
               const isSelectedOpt = selected === opt;
+              const isCorrectAnswer = opt === question.answer;
+              // Tampilkan jawaban benar (hijau) kalau anak sudah jawab
+              const showAsCorrect = selected !== null && isCorrectAnswer;
+              const bg = isSelectedOpt
+                ? isCorrect
+                  ? '#10b981'
+                  : '#ef4444'
+                : showAsCorrect
+                  ? '#10b981'
+                  : theme.bgHover;
+              const color = isSelectedOpt || showAsCorrect ? '#fff' : theme.text;
               return (
                 <button
                   key={i}
@@ -299,10 +352,10 @@ export default function PowerBattle({
                     fontWeight: '800',
                     borderRadius: '14px',
                     border: 'none',
-                    background: isSelectedOpt ? (isCorrect ? '#10b981' : '#ef4444') : theme.bgHover,
-                    color: isSelectedOpt ? '#fff' : theme.text,
+                    background: bg,
+                    color,
                     cursor: selected !== null ? 'default' : 'pointer',
-                    transition: 'transform 0.15s',
+                    transition: 'transform 0.15s, background 0.2s',
                   }}
                 >
                   {opt}
@@ -346,6 +399,23 @@ export default function PowerBattle({
               }}
             >
               {isCorrect ? '🎉 Benar!' : `❌ Jawaban: ${question.answer}`}
+              {showHint && (
+                <div
+                  style={{
+                    marginTop: '6px',
+                    fontSize: '12px',
+                    fontWeight: 500,
+                    opacity: 0.9,
+                    lineHeight: 1.4,
+                    textAlign: 'left',
+                    background: 'rgba(255,255,255,0.5)',
+                    padding: '6px 8px',
+                    borderRadius: '6px',
+                  }}
+                >
+                  💡 {question.hint}
+                </div>
+              )}
             </div>
           )}
 
@@ -357,11 +427,17 @@ export default function PowerBattle({
 
       {gameOver && (
         <div style={{ textAlign: 'center', padding: '30px 16px' }}>
-          <div style={{ fontSize: '50px', marginBottom: '8px', animation: 'float 2s ease-in-out infinite' }}>
-            {lives <= 0 ? '💫' : '🏆'}
+          <div
+            style={{
+              fontSize: '50px',
+              marginBottom: '8px',
+              animation: 'float 2s ease-in-out infinite',
+            }}
+          >
+            {lives <= 0 ? '💫' : isBossResult ? '👑' : '🏆'}
           </div>
           <h3 style={{ fontSize: '20px', fontWeight: '900', color: theme.heading }}>
-            {lives <= 0 ? 'Coba Lagi, Kamu Pasti Bisa!' : 'Selesai!'}
+            {lives <= 0 ? 'Coba Lagi, Kamu Pasti Bisa!' : isBossResult ? 'Bos Dikalahkan!' : 'Selesai!'}
           </h3>
           <p style={{ fontSize: '14px', color: theme.textSecondary, marginTop: '4px' }}>
             Skor: <strong>{score}</strong> · Combo terbaik: <strong>{bestCombo}x</strong>
