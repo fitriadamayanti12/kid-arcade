@@ -316,9 +316,9 @@ export default function PowerBattle({
               onClick={handleUseFifty}
               disabled={fiftyUsed || selected !== null}
               style={{
-                padding: '12px 22px',
+                padding: '8px 16px',
                 borderRadius: '999px',
-                fontSize: '14px',
+                fontSize: '12px',
                 fontWeight: 700,
                 border: `1px solid ${theme.border}`,
                 background: fiftyUsed ? theme.bgHover : '#ede9fe',

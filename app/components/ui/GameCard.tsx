@@ -43,9 +43,8 @@ export default function GameCard({
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '5px',
-          minHeight: '104px',
-          padding: '18px 8px',
+          gap: '4px',
+          padding: '16px 8px',
           borderRadius: '20px',
           border: `2px solid ${color}33`,
           background: d ? `${color}26` : `${color}14`,
@@ -62,19 +61,19 @@ export default function GameCard({
           e.currentTarget.style.boxShadow = `0 3px 10px ${color}22`;
         }}
       >
-        <span style={{ fontSize: '36px', lineHeight: 1 }}>{label.split(' ')[0]}</span>
-        <span style={{ fontSize: '14.5px', fontWeight: 800, color: d ? '#f1f5f9' : '#0f172a' }}>
+        <span style={{ fontSize: '30px', lineHeight: 1 }}>{label.split(' ')[0]}</span>
+        <span style={{ fontSize: '13px', fontWeight: 800, color: d ? '#f1f5f9' : '#0f172a' }}>
           {label.split(' ').slice(1).join(' ')}
         </span>
         {typeof count === 'number' && (
           <span
             style={{
-              fontSize: '11px',
+              fontSize: '10px',
               fontWeight: 700,
               color,
               background: d ? 'rgba(255,255,255,0.1)' : '#ffffff',
               borderRadius: '999px',
-              padding: '3px 10px',
+              padding: '2px 9px',
               marginTop: '2px',
             }}
           >
@@ -93,15 +92,13 @@ export default function GameCard({
       style={{
         position: 'relative',
         width: '100%',
-        minHeight: '92px',
-        padding: '16px 10px 14px',
+        padding: '14px 10px 12px',
         borderRadius: '18px',
         border: selected ? `2px solid ${textColor || color}` : `1px solid ${theme.border}`,
         background: selected ? color : theme.bgCard,
         color: selected ? textColor || theme.text : theme.text,
         fontWeight: selected ? 800 : 600,
-        fontSize: '15px',
-        lineHeight: 1.3,
+        fontSize: '13.5px',
         cursor: 'pointer',
         transition: 'transform 0.15s ease, box-shadow 0.15s ease',
         boxShadow: selected ? `0 6px 16px ${color}80` : theme.shadowSm,
@@ -109,8 +106,7 @@ export default function GameCard({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
-        gap: '7px',
+        gap: '6px',
         textAlign: 'center',
       }}
       onMouseEnter={(e) => {
@@ -140,7 +136,7 @@ export default function GameCard({
         </span>
       )}
       <span>{label}</span>
-      {stars && <span style={{ fontSize: '11px', letterSpacing: '1px', opacity: 0.85 }}>{stars}</span>}
+      {stars && <span style={{ fontSize: '10px', letterSpacing: '1px', opacity: 0.8 }}>{stars}</span>}
     </button>
   );
 }

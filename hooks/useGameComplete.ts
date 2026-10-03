@@ -10,12 +10,6 @@ const BADGE_RULES: Record<string, (stars: number, score: number, extra?: any) =>
   wordmatch: (stars) => stars >= 3 ? '📖 Word Master' : null,
   fillblanks: (stars) => stars >= 3 ? '✏️ Fill Master' : null,
   aigame: (stars) => stars >= 3 ? '🤖 AI Master' : null,
-  // 💯 5 Game Tambahan Menuju 100
-  jamberdetak: (stars, _s, extra) => stars >= 3 && extra?.bossCleared ? '🕐 Jagoan Jam' : null,
-  pasaruang: (stars, _s, extra) => stars >= 3 && extra?.bossCleared ? '🛍️ Jagoan Belanja' : null,
-  arenakelilingluas: (stars, _s, extra) => stars >= 3 && extra?.bossCleared ? '📐 Master Bangun Datar' : null,
-  arenapembulatan: (stars, _s, extra) => stars >= 3 && extra?.bossCleared ? '🔢 Jagoan Pembulatan' : null,
-  detektifratarata: (stars, _s, extra) => stars >= 3 && extra?.bossCleared ? '📊 Master Rata-Rata' : null,
   // 🏅 Game Penalaran Olimpiade Kelas 1
   polalogika: (stars, _s, extra) => stars >= 3 && extra?.bossCleared ? '🧩 Master Pola' : null,
   timbanganajaib: (stars, _s, extra) => stars >= 3 && extra?.bossCleared ? '⚖️ Ahli Timbangan' : null,

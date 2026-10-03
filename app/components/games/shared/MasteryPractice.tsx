@@ -504,8 +504,8 @@ export default function MasteryPractice({ config, playerName, onComplete }: Prop
     background: 'transparent',
     border: `1px solid ${theme.border}`,
     borderRadius: '12px',
-    padding: '11px 16px',
-    fontSize: '14px',
+    padding: '7px 12px',
+    fontSize: '13px',
     fontWeight: 700,
     color: theme.textSecondary,
     cursor: 'pointer',
@@ -558,7 +558,7 @@ export default function MasteryPractice({ config, playerName, onComplete }: Prop
                 }}
               >
                 <div style={{ fontSize: '22px' }}>{unlocked ? g.emoji : '🔒'}</div>
-                <div style={{ fontWeight: 800, fontSize: '15px', color: theme.heading, margin: '2px 0 6px' }}>{g.label}</div>
+                <div style={{ fontWeight: 800, fontSize: '14px', color: theme.heading, margin: '2px 0 6px' }}>{g.label}</div>
                 <Bar pct={pct} color={passed ? '#10b981' : config.color} track={theme.border} />
                 <div style={{ fontSize: '11px', color: theme.textMuted, marginTop: '4px' }}>
                   {!unlocked ? 'Lulus tahap sebelumnya dulu' : passed ? `✅ Lulus · ${Math.round(pct * 100)}%` : `${Math.round(pct * 100)}%`}
